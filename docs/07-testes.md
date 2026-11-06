@@ -109,6 +109,7 @@ it("não lê workspace de outro tenant", async () => {
 
 - `pnpm test` (rápida): em `apps/api`, `vitest run --exclude '**/*.int.test.ts'`. Convenção: todo teste que abre conexão com o banco `dev` se chama `*.int.test.ts`. Roda antes de todo PR e no CI (o CI não tem `TEST_DATABASE_URL`).
 - `pnpm test:full`: tudo, inclusive `*.int.test.ts` (exige `TEST_DATABASE_URL` + `TEST_ALLOWED_DB_REFS`). Só quando pedido, antes de mudança grande em área lenta, ou nightly.
+- **`pnpm test:local` (padrão para integração, decisão 2026-11-05):** `scripts/test-db.mjs` sobe um **Postgres 17 portátil e descartável** (`embedded-postgres`, sem instalar nada), aplica `supabase/tests/local-stub.sql` (auth/storage do Supabase) e todas as migrations, define `TEST_DATABASE_URL` (papel `app_api`), `TEST_ADMIN_DATABASE_URL` e `TEST_ALLOWED_DB_REFS=127.0.0.1`, roda `pnpm test:full` e apaga o banco. Nenhum dado real é tocado. `pnpm test:db` só confere que o banco sobe e as migrations aplicam. Teste contra o projeto dev passa a ser opcional (só para conferir comportamento específico do Supabase hospedado).
 - Por quê: suíte completa contra banco remoto chega fácil a vários minutos com saída enorme; separar `test`/`test:full` e usar reporter `dot` é o que torna viável o agente rodar testes sem estourar contexto.
 
 ## Como rodar (comandos prontos)

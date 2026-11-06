@@ -43,7 +43,7 @@ Migration `supabase/migrations/<timestamp>_condominium_structure.sql`, tipo **ex
 - Histórico de cada pessoa (protótipo `historico`) = eventos de `app.audit_log` com `entity_type = 'person'`, sem tabela nova.
 
 **Helper**
-- `app.my_unit_ids()` `returns setof uuid`, `security definer`, `set search_path = ''`: unidades com `unit_members` ativo (`ends_on is null or ends_on >= current_date`) cuja pessoa tem `user_id = app.current_user_id()`, `access_status = 'active'`, na `app.current_org_id()`. Grant só a `app_api`.
+- `app.my_unit_ids()` `returns setof uuid`, `security definer`, `set search_path = ''`: unidades com `unit_members` ativo (`ends_on is null or ends_on > current_date`: o acesso termina **na data de término**, para o síndico poder cortar na hora; decisão de segurança tomada na verificação local, 2026-11-05) cuja pessoa tem `user_id = app.current_user_id()`, `access_status = 'active'`, na `app.current_org_id()`. Grant só a `app_api`.
 
 **RLS** (todas `to app_api`, `(select app.current_org_id())`, deny-by-default):
 

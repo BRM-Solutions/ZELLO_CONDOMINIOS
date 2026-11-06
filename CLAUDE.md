@@ -62,7 +62,7 @@ SaaS multi-tenant em pt-BR (organization → workspaces → recursos). Domínio 
 
 ## Testes (docs/07-testes.md)
 - Rode só o arquivo afetado: `pnpm --filter @app/api exec vitest run src/<arquivo>.test.ts`.
-- `pnpm test` = rápida (exclui `*.int.test.ts`). Teste com banco real se chama `*.int.test.ts`, só roda em `pnpm test:full` com `TEST_DATABASE_URL` do dev + `TEST_ALLOWED_DB_REFS` (trava em `apps/api/src/test/guard.ts`).
+- `pnpm test` = rápida (exclui `*.int.test.ts`). Teste com banco real se chama `*.int.test.ts` e roda com `pnpm test:local` (Postgres 17 local descartável; sem dev nem segredo). Contra o dev só se pedido, via `pnpm test:full` com `TEST_DATABASE_URL` + `TEST_ALLOWED_DB_REFS` (trava em `apps/api/src/test/guard.ts`).
 - Sempre em background, saída em arquivo; leia só `grep -E "Test Files|Tests|FAIL" <arquivo>`.
 - Relate números reais ("Tests 12 passed"), nunca só "passou".
 
