@@ -1,0 +1,122 @@
+/* Vitrine /design-system (somente dev) */
+.ds-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.ds-bars {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.ds-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.ds-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: var(--space-3);
+}
+
+.ds-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: var(--space-3);
+}
+
+.ds-swatch {
+  min-width: 0;
+  font-size: var(--text-xs);
+  line-height: 1rem;
+  text-align: center;
+}
+
+.ds-swatch__chip {
+  height: 56px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+}
+
+.ds-swatch__name {
+  margin-top: var(--space-1);
+}
+
+.ds-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ds-row--loose {
+  gap: var(--space-6);
+}
+
+.ds-brand-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.ds-brand-sample {
+  min-width: 0;
+  padding: var(--space-6);
+  background: var(--sidebar);
+  border-radius: var(--radius-xl);
+  color: var(--sidebar-foreground);
+}
+
+.ds-brand-sample__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.ds-brand-sample__name {
+  font-size: var(--text-3xl);
+  line-height: 2.25rem;
+}
+
+.ds-brand-sample__note {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.25rem;
+  opacity: 0.8;
+}
+
+.ds-mosaic {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+}
+
+.ds-display {
+  font-size: var(--text-5xl);
+  line-height: 1;
+}
+
+.ds-lead {
+  margin-top: var(--space-4);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .ds-brand-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .ds-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,36 +1,51 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { parseThemePreference, useBranding, type ThemePreference } from "../contexts/BrandingContext";
 
-type Theme = "light" | "dark";
 const STORAGE_KEY = "theme";
+const listeners = new Set<() => void>();
+let memoryFallback: ThemePreference | undefined;
 
-function readStored(): Theme | undefined {
+function readStored(): ThemePreference | undefined {
   try {
-    const value = localStorage.getItem(STORAGE_KEY);
-    return value === "light" || value === "dark" ? value : undefined;
+    return parseThemePreference(localStorage.getItem(STORAGE_KEY));
   } catch {
-    return undefined;
+    return memoryFallback;
   }
 }
 
-function systemPrefersDark(): boolean {
-  return typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+function writeStored(value: ThemePreference): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, value);
+  } catch {
+    memoryFallback = value;
+  }
+  listeners.forEach((listener) => listener());
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+export function applyTheme(preference: ThemePreference): void {
+  const root = document.documentElement;
+  if (preference === "system") root.removeAttribute("data-theme");
+  else root.setAttribute("data-theme", preference);
 }
 
 export function useTheme() {
-  const [stored, setStored] = useState<Theme | undefined>(readStored);
-  const theme: Theme = stored ?? (systemPrefersDark() ? "dark" : "light");
+  const { defaultTheme } = useBranding();
+  const stored = useSyncExternalStore(subscribe, readStored, () => undefined);
+  const preference: ThemePreference = stored ?? defaultTheme;
 
-  const toggle = useCallback(() => {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    try {
-      localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      setStored(next);
-      return;
-    }
-    setStored(next);
-  }, [theme]);
+  useEffect(() => {
+    applyTheme(preference);
+  }, [preference]);
 
-  return { theme, toggle };
+  const setPreference = useCallback((next: ThemePreference) => writeStored(next), []);
+  return { preference, setPreference };
 }

@@ -2,9 +2,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Navigate, useLocation } from "react-router-dom";
-import { toast } from "sonner";
 import { z } from "zod";
+import { Alert } from "../components/ui/Alert";
+import { Button } from "../components/ui/Button";
+import { Field, Input } from "../components/ui/Field";
+import { PLATFORM_NAME, TenantLogo } from "../components/shell/Brand";
 import { useAuth } from "../contexts/AuthContext";
+import { useBranding } from "../contexts/BrandingContext";
+import { cx } from "../lib/cx";
 
 const loginSchema = z.object({
   email: z.string().email("Informe um e-mail válido"),
@@ -14,8 +19,10 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
   const { session, signInWithPassword, signInWithMagicLink } = useAuth();
+  const { portalName, legalName, slogan, loginPhotoUrl } = useBranding();
   const location = useLocation();
   const [magicSent, setMagicSent] = useState(false);
+  const [formError, setFormError] = useState("");
   const {
     register,
     handleSubmit,
@@ -30,45 +37,67 @@ export function LoginPage() {
   }
 
   const onSubmit = handleSubmit(async ({ email, password }) => {
+    setFormError("");
     try {
       await signInWithPassword(email, password);
     } catch {
-      toast.error("E-mail ou senha incorretos");
+      setFormError("E-mail ou senha incorretos. Confira os dados e tente de novo.");
     }
   });
 
   const onMagicLink = async () => {
+    setFormError("");
     if (!(await trigger("email"))) return;
     try {
       await signInWithMagicLink(getValues("email"));
       setMagicSent(true);
     } catch {
-      toast.error("Não foi possível enviar o link de acesso");
+      setFormError("Não foi possível enviar o link de acesso. Tente de novo.");
     }
   };
 
   return (
-    <main className="login">
-      <form className="card form" onSubmit={onSubmit} noValidate>
-        <h1>Entrar em {"{{PROJETO}}"}</h1>
-        <div className="field">
-          <label htmlFor="email">E-mail</label>
-          <input id="email" type="email" autoComplete="email" {...register("email")} />
-          {errors.email && <span className="field-error">{errors.email.message}</span>}
+    <main className={cx("login", loginPhotoUrl && "login--photo")}>
+      {loginPhotoUrl && (
+        <div className="login__photo">
+          <img src={loginPhotoUrl} alt={legalName || portalName} className="login__photo-img" />
+          <div className="login__photo-fade" />
+          <div className="login__photo-text">
+            <h2 className="login__photo-title">{portalName}</h2>
+            {slogan && <p className="login__slogan">{slogan}</p>}
+          </div>
         </div>
-        <div className="field">
-          <label htmlFor="password">Senha</label>
-          <input id="password" type="password" autoComplete="current-password" {...register("password")} />
-          {errors.password && <span className="field-error">{errors.password.message}</span>}
+      )}
+      <div className="login__panel">
+        <div className="login__box">
+          <div className="login__head">
+            <TenantLogo size="xl" />
+            <h1 className="login__title">{portalName}</h1>
+            {legalName && <p className="login__legal">{legalName}</p>}
+          </div>
+          <form className="login__form" onSubmit={onSubmit} noValidate>
+            <Field label="E-mail" error={errors.email?.message}>
+              <Input type="email" autoComplete="email" placeholder="voce@email.com" {...register("email")} />
+            </Field>
+            <Field label="Senha" error={errors.password?.message}>
+              <Input type="password" autoComplete="current-password" {...register("password")} />
+            </Field>
+            {formError && <Alert tone="danger">{formError}</Alert>}
+            <Button type="submit" size="lg" block loading={isSubmitting}>
+              {isSubmitting ? "Entrando..." : "Entrar"}
+            </Button>
+            <Button variant="outline" block onClick={() => void onMagicLink()}>
+              Receber link de acesso por e-mail
+            </Button>
+            {magicSent && (
+              <p className="muted" role="status">
+                Enviamos o link para o seu e-mail.
+              </p>
+            )}
+          </form>
+          <p className="login__footer">uma plataforma {PLATFORM_NAME}</p>
         </div>
-        <button type="submit" className="button button-primary" disabled={isSubmitting}>
-          {isSubmitting ? "Entrando..." : "Entrar"}
-        </button>
-        <button type="button" className="button button-ghost" onClick={() => void onMagicLink()}>
-          Receber link de acesso por e-mail
-        </button>
-        {magicSent && <p className="state" role="status">Enviamos o link para o seu e-mail.</p>}
-      </form>
+      </div>
     </main>
   );
 }

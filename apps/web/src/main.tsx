@@ -2,8 +2,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { Toaster } from "sonner";
 import { App } from "./App";
+import { AppToaster } from "./components/ui/AppToaster";
+import { BrandingProvider } from "./contexts/BrandingContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ApiError } from "./api";
 import "./tokens.css";
@@ -23,10 +24,12 @@ createRoot(document.getElementById("root") as HTMLElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
-          <App />
-          <Toaster position="top-center" richColors />
-        </AuthProvider>
+        <BrandingProvider>
+          <AuthProvider>
+            <App />
+            <AppToaster />
+          </AuthProvider>
+        </BrandingProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,
