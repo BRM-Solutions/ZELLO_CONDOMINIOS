@@ -22,15 +22,15 @@
 |---|---|
 | DECIDIR-DS-1 a DS-4 da [spec da base visual](spec-design-system-base.md) | **decidido** 2026-11-05 |
 | [ADR-010](../adr/0010-tenant-organization-workspace-condominio.md) (P1 do PRD) | **aceito** 2026-11-05 |
-| P2 decidido; P3 parcial (campos de unidade/pessoa) e D1–D2 de [11-dominio](../11-dominio.md) §3 | aberto |
-| Escrever `spec-estrutura-condominio.md` e aprovar as duas specs da Onda 1 | a fazer |
+| P2, P3, D1–D4, PZ-1 a PZ-3, R6–R8 ([11-dominio](../11-dominio.md)) | **decidido** 2026-11-05 |
+| Aprovar as duas specs da Onda 1 | aguardando a dona |
 
 ## Onda 1 — fundação (2 agentes em paralelo)
 
 | Trilha | Spec | Área de código | Bloqueio | Status |
 |---|---|---|---|---|
 | A — web | [spec-design-system-base](spec-design-system-base.md) | `apps/web` | aprovação da spec | pronta para aprovar |
-| B — banco/API | `spec-estrutura-condominio.md` (workspaces, blocos, unidades, `unit_members` com histórico, papéis D1–D2, `app.my_unit_ids()`, rotas, testes A/B) | `supabase/`, `apps/api`, `packages/shared` | P3 (campos), D1, D2 | a escrever |
+| B — banco/API | [spec-estrutura-condominio](spec-estrutura-condominio.md) (condomínio com slug, blocos, unidades, pessoas com pré-cadastro, vínculos com histórico, papel `council`, `app.my_unit_ids()`, telefone cifrado) | `supabase/`, `apps/api`, `packages/shared` | aprovação da spec | pronta para aprovar |
 
 A e B não compartilham arquivo. Dono dos arquivos compartilhados nesta onda: trilha B (A não toca `packages/shared`).
 
@@ -38,18 +38,18 @@ A e B não compartilham arquivo. Dono dos arquivos compartilhados nesta onda: tr
 
 | Ordem | Spec | Área | Bloqueio | Status |
 |---|---|---|---|---|
-| 2.1 | [spec-personalizador](spec-personalizador.md) (marca e tema por condomínio; marca Vila Gaudí como dado) | `supabase/`, `apps/api`, `packages/shared`, `apps/web` | PZ-1 a PZ-3 | rascunho |
-| 2.2 | `spec-cadastro-moradores.md` (página de cadastro **sem convite**, confirmação de e-mail via Resend/outbox, aprovação) | `supabase/`, `apps/api`, `packages/shared` | D4 | a escrever |
+| 2.1 | [spec-personalizador](spec-personalizador.md) (marca e tema por condomínio; marca Vila Gaudí como dado) | `supabase/`, `apps/api`, `packages/shared`, `apps/web` | Onda 1 | decidida, aguarda Onda 1 |
+| 2.2 | `spec-cadastro-moradores.md` (página `/c/<slug>/cadastro` **sem convite**, vínculo com pré-cadastro, confirmação de e-mail via Resend/outbox, aprovação por síndico/administradora) | `supabase/`, `apps/api`, `packages/shared` | — | a escrever |
 | 2.3 | `spec-telas-acesso.md` (login real, recuperar senha, cadastro, `/moradores`, aprovações, estrutura do condomínio) | `apps/web` | 2.2 + Onda 1 | a escrever |
-| 2.4 | `spec-backoffice-minimo.md` (condomínios, usuários, auditoria dentro do portal; `super_admin`) | api + web | D3 | a escrever |
+| 2.4 | `spec-backoffice-minimo.md` (condomínios, usuários, auditoria dentro do portal; `super_admin` com motivo auditado) | api + web | — | a escrever |
 
 ## Onda 3 — módulos do dia a dia (2 módulos por vez)
 
 | Sub-onda | Spec | Rota do mock | Bloqueio | Status |
 |---|---|---|---|---|
 | 3a | `spec-comunicados.md` (morador vê todos) | `/comunicados` | — | a escrever |
-| 3a | `spec-ocorrencias.md` | `/ocorrencias` | R7 de [11-dominio](../11-dominio.md) | a escrever |
-| 3b | `spec-reservas.md` | `/reservas` | R8 de [11-dominio](../11-dominio.md) | a escrever |
+| 3a | `spec-ocorrencias.md` (regras do protótipo, R7) | `/ocorrencias` | — | a escrever |
+| 3b | `spec-reservas.md` (regras do protótipo, R8) | `/reservas` | — | a escrever |
 | 3b | `spec-documentos.md` (morador vê todos) | `/documentos` | — | a escrever |
 
 Cada módulo: migration própria + `apps/api/src/modules/<modulo>` + `apps/web/src/pages/<modulo>`. Os dois módulos de uma sub-onda rodam em paralelo; registro em arquivos compartilhados fica com um só dono.

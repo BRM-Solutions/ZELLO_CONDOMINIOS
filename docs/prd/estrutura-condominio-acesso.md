@@ -68,7 +68,7 @@ Administradora estrutura um condomínio de ~250 unidades e convida o síndico em
 
 - [x] **P1**: cliente pagante (administradora ou autogerido); administradora gere vários condomínios. [ADR-010](../adr/0010-tenant-organization-workspace-condominio.md) aceita.
 - [x] **P2**: super_admin (ZELLO), admin (administradora e conselho), manager (síndico e subsíndico), staff, member. Pendências D1–D3.
-- [ ] **P3**: vínculos com inquilino, dependente e histórico = **sim**. Falta: campos obrigatórios da unidade (bloco? andar? fração ideal?) e da pessoa (telefone? CPF?).
+- [x] **P3**: como no protótipo — unidade = bloco + número; pessoa = nome + e-mail, telefone/WhatsApp/foto opcionais, sem CPF; vínculos Proprietário/Inquilino/Morador/Outros com histórico. Spec: [spec-estrutura-condominio](../specs/spec-estrutura-condominio.md).
 - [x] **P4/P5**: sem convites; página de cadastro. Fluxo de aprovação: D4.
 - [x] **P6**: e-mail via Resend.
 - [x] **P7**: backoffice dentro do portal para `admin`.

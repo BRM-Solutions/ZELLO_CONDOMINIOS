@@ -3,8 +3,9 @@
 > **Quando ler:** ao escrever qualquer PRD/spec, desenhar entidades de um módulo novo, definir papéis/permissões ou policies RLS.
 > **Resumo:**
 > - SaaS de gestão de condomínios: a conta é do cliente que paga (administradora ou condomínio autogerido); cada condomínio é um `workspace` dentro dela ([ADR-010](adr/0010-tenant-organization-workspace-condominio.md), aceita em 2026-11-05).
-> - Papéis: `super_admin` (plataforma ZELLO, fora de `memberships`), `admin` (administradora e conselho), `manager` (síndico e subsíndico), `staff` (zelador/equipe), `member` (morador). Detalhes e pontos em aberto na §3.
-> - Acesso de morador por **página de cadastro** (sem convites), com aprovação — §4 R6 (em aberto).
+> - Papéis: `super_admin` (plataforma ZELLO, fora de `memberships`), `owner` (contratante da conta), `admin` (administradora), `council` (conselho, só o seu condomínio), `manager` (síndico e subsíndico), `staff` (zelador/equipe), `member` (morador). §3.
+> - Sem convites: síndico/administradora pré-cadastram moradores e/ou o morador se cadastra; acesso só após aprovação — §4 R6.
+> - Regra geral (2026-11-05): dados e regras **como estão no protótipo** do zip, ajustados só pelas regras de `docs/` (LGPD, segurança).
 > - Seção vazia ou com `DECIDIR:` = pergunta à dona do produto, nunca suposição. Interface: [13-design-system](13-design-system.md) (REGRA DURA).
 > **Relacionados:** [arquitetura](01-arquitetura.md), [banco](02-banco-de-dados.md), [segurança](03-seguranca.md), [plano](plano-desenvolvimento-condominio-360.md), [PRD estrutura e acesso](prd/estrutura-condominio-acesso.md), [workflow Claude](10-workflow-claude.md)
 
@@ -40,10 +41,10 @@ workspaces 1─N documents 1─N document_versions
 |---|---|---|---|---|
 | `workspaces` | Condomínio | organization | não | `cnpj/city/state` de exemplo revistos na spec de estrutura; endereço exibido no portal |
 | `workspace_branding` | Personalização do portal | workspace | não | [spec-personalizador](specs/spec-personalizador.md) |
-| `blocks` | Bloco/torre | workspace | não | campos: P3 (em aberto) |
-| `units` | Unidade | workspace | não | campos: P3 (em aberto) |
-| `unit_members` | Vínculo pessoa↔unidade | workspace | sim | proprietário, inquilino, dependente; **histórico mantido** (P3, 2026-11-05) |
-| `unit_requests` (nome provisório) | Solicitação de cadastro | workspace | sim | só se R6 = cadastro com aprovação |
+| `blocks` | Bloco | workspace | não | nome (ex.: "Bloco 1") — como no protótipo (`R/lib/moradores.ts:15`) |
+| `units` | Unidade | workspace | não | bloco + número ("1201"); **sem andar nem fração ideal** (protótipo, P3) |
+| `people` | Pessoa (morador, síndico, equipe) | workspace | sim | nome e e-mail obrigatórios; telefone, WhatsApp e foto opcionais; **sem CPF** (protótipo `R/lib/moradores.ts:6-11`); pode existir sem conta de login (pré-cadastro) |
+| `unit_members` | Vínculo pessoa↔unidade | workspace | sim | Proprietário, Inquilino, Morador, Outros (protótipo `R/lib/moradores.ts:3`); dependente = "Morador"; **histórico mantido** |
 
 ## 3. Papéis e matriz de permissão
 
@@ -51,30 +52,33 @@ Papéis de tenant vêm de `memberships`, nunca de claim do JWT. Decisão P2 (202
 
 | Papel | Quem é neste produto | Escopo |
 |---|---|---|
-| `super_admin` | devs e donos da ZELLO; "veem tudo" | **plataforma** (todas as organizações) — não é `membership`; mecanismo em aberto (D3) |
-| `owner` | `DECIDIR` (D1) | organização |
-| `admin` | administradora **e** conselho | administradora: organização; conselho: ver D2 |
+| `super_admin` | devs e donos da ZELLO; "veem tudo" | **plataforma** (todas as organizações) — não é `membership` (D3) |
+| `owner` | contratante da conta do cliente (D1) | organização |
+| `admin` | administradora | organização |
+| `council` | conselho ("Administração e Conselho" do protótipo) | **só o seu condomínio** (D2) |
 | `manager` | síndico(a) e subsíndico(a) | condomínio |
 | `staff` | zelador e equipe | condomínio |
 | `member` | morador (proprietário, inquilino, dependente) | condomínio + só as próprias unidades (`unit_members`) |
 
 Matriz inicial (C = criar/editar, L = ler, P = só o próprio, — = nada):
 
-| Recurso | admin | manager | staff | member |
-|---|---|---|---|---|
-| Condomínios, usuários, auditoria (backoffice no portal, P7) | C | L (do seu condomínio) | — | — |
-| Personalizador | C | `DECIDIR` (PZ-2) | — | — |
-| Blocos e unidades | C | C | L (mínimo) | P |
-| Moradores e vínculos | C | C | L (mínimo, sem contato) | P |
-| Comunicados | C | C | L | L (todos — decisão 2026-11-05) |
-| Documentos | C | C | L | L (todos — decisão 2026-11-05) |
-| Ocorrências | C | C | C (transições de zelador) | P |
-| Reservas | C | C | L | P |
+| Recurso | owner/admin | council | manager | staff | member |
+|---|---|---|---|---|---|
+| Condomínios, usuários, auditoria (backoffice no portal, P7) | C | — | L (seu condomínio) | — | — |
+| Personalizador (PZ-2) | C | — | — | — | — |
+| Blocos e unidades | C | L | C | L | L |
+| Pessoas, vínculos, aprovação de acesso | C | — (protótipo: conselho não vê Moradores) | C | — | P |
+| Comunicados | C | L | C | L | L (todos) |
+| Documentos | C | L | C | L | L (todos) |
+| Ocorrências | C | L | C | Em andamento / Executada | cria; vê todas; anexos só das próprias |
+| Reservas | C (aprova) | L + próprias | C (aprova) | — | cria / cancela as próprias |
 
-Em aberto:
-- **D1 — `owner`:** a resposta P2 cita "owner.. super_admin". O `owner` do kit é o contratante da conta **dentro** do tenant (ex.: sócio da administradora, faturamento). Opções: (a) manter `owner` como contratante do cliente e criar `super_admin` à parte para a ZELLO — recomendado; (b) não usar `owner` no tenant.
-- **D2 — Conselho como `admin`:** no schema atual `admin` vale para a organização inteira (`memberships_scope_check`, `supabase/migrations/20261030120000_base_multitenant.sql:78-81`). Numa administradora com vários condomínios, um conselheiro do condomínio A veria o condomínio B. Opções: (a) papel novo `council` restrito ao condomínio, com as mesmas telas do `admin` — recomendado; (b) permitir `admin` com `workspace_id` e revisar todas as policies que usam `app.has_org_role(['admin'])`; (c) aceitar o acesso a todos os condomínios da administradora.
-- **D3 — `super_admin` "vê tudo":** exige mecanismo fora da RLS por tenant (tabela de operadores da plataforma + funções `security definer` auditadas). Para LGPD, recomendado: acesso a dado pessoal só com motivo registrado em `audit_log` e somente leitura por padrão `[verificar com jurídico]`. Entra na spec do backoffice.
+`super_admin`: tudo, em todas as contas, com trilha (D3). Telas por papel seguem o menu do protótipo (`R/components/vg/AppShell.tsx:14-39`).
+
+Decididos em 2026-11-05:
+- **D1:** `owner` = contratante da conta do cliente; `super_admin` separado, acima de todas as contas.
+- **D2:** papel próprio `council` para o conselho, restrito ao condomínio (`workspace_id` obrigatório, como `manager`). O `memberships_scope_check` (`supabase/migrations/20261030120000_base_multitenant.sql:78-81`) e `ROLES` (`packages/shared/src/tenancy.ts:4-8`) mudam na [spec de estrutura](specs/spec-estrutura-condominio.md).
+- **D3:** `super_admin` vê tudo; acesso a dado pessoal só com motivo registrado em `audit_log` (somente leitura por padrão) `[verificar com jurídico]`. Mecanismo na spec do backoffice (Onda 2.4).
 
 ## 4. Regras de negócio
 
@@ -82,14 +86,13 @@ Em aberto:
 |---|---|---|---|
 | R1 | Um usuário pode ter acesso a vários condomínios e vínculo com várias unidades | plano §5 | confirmada (P1) |
 | R2 | Morador só acessa com `memberships.member` **e** `unit_members` ativo | plano §5 | confirmada |
-| R3 | Vínculo tem tipo (proprietário, inquilino, dependente) e histórico; encerrar preenche data de fim, não apaga | dona, P3 | confirmada |
+| R3 | Vínculo tem tipo (Proprietário, Inquilino, Morador, Outros) e histórico; encerrar preenche data de fim, não apaga | dona, P3 + protótipo | confirmada |
 | R4 | Comunicados e documentos: todo morador do condomínio vê tudo | dona, 2026-11-05 | confirmada |
 | R5 | Backoffice (condomínios, usuários, auditoria) dentro do portal para `admin` | dona, P7 | confirmada |
-| R6 | Acesso por página de cadastro, sem convites. Como o cadastro vira acesso (aprovação, código do condomínio, escolha da unidade) | dona, P5 | `DECIDIR` (D4) |
-| R7 | Protocolo de ocorrência sequencial por condomínio e ano; morador vê só as próprias | mock | `DECIDIR` (Onda 3) |
-| R8 | Reservas: áreas, valor/caução, aprovação, prazo de cancelamento | — | `DECIDIR` (Onda 3) |
+| R6 | Sem convites. Síndico/administradora **pré-cadastram** todos os moradores (pessoa + unidade) com a lista que já têm; o morador cria o acesso pela página de cadastro do condomínio (`/c/<slug>/cadastro`), confirma o e-mail e fica **pendente** até síndico ou administradora aprovar. E-mail igual a um pré-cadastro → vincula a ele; sem pré-cadastro → solicitação nova com unidade declarada | dona, D4 | confirmada |
+| R7 | Ocorrências como no protótipo: protocolo `OC-AAAA-0001` sequencial por condomínio e ano, nunca reutilizado (`R/lib/protocolo.ts:1-6`); categorias Manutenção, Reclamação, Sugestões, Elogio, Outros; status Aberta → Em andamento → Executada → Concluída; zelador só move para Em andamento/Executada, só síndico/administração concluem (`R/lib/ocorrencias.ts:24-29`); morador vê "Minhas" e "Todas", anexos só das próprias (`R/routes/ocorrencias.tsx:34-39`) | dona ("todos") + protótipo | confirmada; LGPD: o que de autor/unidade aparece em "Todas" vai para a spec |
+| R8 | Reservas como no protótipo: áreas configuráveis por condomínio (nome, descrição, capacidade, valor, dias da semana, prazo de cancelamento — `R/lib/reservas.ts:1-12`); uma reserva Pendente/Aprovada bloqueia o dia da área; status Pendente → Aprovada/Recusada por síndico/administração, Cancelada pelo morador até N dias antes (padrão 2); sem caução | dona ("todos") + protótipo | confirmada; valores das áreas do Vila Gaudí são dado do condomínio |
 
-- **D4 — Cadastro sem convite:** recomendado: página de cadastro do condomínio (link com slug), a pessoa informa nome, e-mail, bloco/unidade e tipo de vínculo, confirma o e-mail e fica **pendente** até aprovação de síndico ou administradora; só então ganha `member` + `unit_members`. Alternativa: aprovação automática por código secreto do condomínio (mais rápida, menos segura). Equipe (`staff`) e síndico entram cadastrados pela administradora.
 - Valores monetários: centavos (`bigint`).
 
 ## 5. Integrações
@@ -107,7 +110,7 @@ Padrão: adapter + outbox/worker ([arquitetura](01-arquitetura.md) §"Integraç�
 
 | Tabela | Dados pessoais | Base legal | Retenção | Cifrado/mascarado? |
 |---|---|---|---|---|
-| `unit_members` / perfil | nome, e-mail, (telefone/CPF: P3) | `DECIDIR` `[verificar com jurídico]` | `DECIDIR` | e-mail mascarado em log |
+| `people` / `unit_members` | nome, e-mail, telefone, WhatsApp, foto | `DECIDIR` `[verificar com jurídico]` | `DECIDIR` | telefone/WhatsApp cifrados (AES-256-GCM na API + HMAC, [03](03-seguranca.md) §"Criptografia"), mascarados na resposta, revelação auditada; e-mail fora de log |
 | solicitação de cadastro | nome, e-mail, unidade declarada | `DECIDIR` | curta após decisão (`DECIDIR`) | — |
 
 - Controlador: o condomínio/administradora; ZELLO: operador `[verificar com jurídico]`. Acesso do `super_admin` a dado pessoal é tratamento pelo operador — precisa de justificativa e trilha (D3).
@@ -120,9 +123,9 @@ Ver [specs/README](specs/README.md) (ondas 0–4).
 
 - [x] Quem paga — cliente contratante, administradora com vários condomínios (P1).
 - [x] Papéis e perfis (P2), com D1–D3 em aberto.
-- [ ] P3 — campos obrigatórios: unidade (bloco? andar? fração ideal?) e pessoa (telefone? CPF?).
-- [ ] D4 — fluxo da página de cadastro.
-- [ ] Ocorrências (R7) e reservas (R8) — antes da Onda 3.
+- [x] P3 — como no protótipo: unidade = bloco + número; pessoa = nome + e-mail (telefone, WhatsApp, foto opcionais); sem CPF.
+- [x] D1–D4, R6–R8 (2026-11-05).
+- [ ] Base legal e retenção dos dados de pessoas `[verificar com jurídico]`.
 - [ ] Financeiro no lançamento e superadmin/planos (plano §8.7–8.8).
 
 ## 9. Glossário
@@ -134,7 +137,9 @@ Ver [specs/README](specs/README.md) (ondas 0–4).
 | Bloco | `block` | torre/bloco do condomínio |
 | Unidade | `unit` | apartamento/casa/sala |
 | Vínculo | `unit_member` | pessoa↔unidade com tipo e período |
-| Administradora / Conselho | `admin` (conselho: D2) | gestão da conta / fiscalização |
+| Administradora | `admin` | gestão da conta |
+| Conselho | `council` | fiscalização de um condomínio |
+| Pessoa | `person` | morador, síndico ou equipe cadastrado no condomínio, com ou sem login |
 | Síndico / Subsíndico | `manager` | gestor do condomínio |
 | Zelador / equipe | `staff` | operação |
 | Morador | `member` | proprietário, inquilino ou dependente |
