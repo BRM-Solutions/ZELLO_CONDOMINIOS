@@ -194,7 +194,9 @@ describe.skipIf(!enabled)("estrutura do condomínio (banco dev)", () => {
     expect(second.status).toBe(201);
     const memberId = second.body.data.units.find((u: { unitId: string }) => u.unitId === unitIds[3]).id;
 
-    const today = (await admin.query<{ d: string }>("select current_date::text as d")).rows[0]!.d;
+    const today = (await admin.query<{ d: string }>("select (now() at time zone 'America/Sao_Paulo')::date::text as d")).rows[0]!.d;
+    const future = await call("mgrA1", orgA, "post", `/api/v1/workspaces/${wsA1}/unit-members/${memberId}/end`, { endsOn: "2999-01-01" });
+    expect(future.status).toBe(400);
     const ended = await call("mgrA1", orgA, "post", `/api/v1/workspaces/${wsA1}/unit-members/${memberId}/end`, {
       endsOn: today,
     });

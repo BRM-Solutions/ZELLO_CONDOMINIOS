@@ -484,6 +484,8 @@ export function endUnitMember(
       if (!current) throw notFound("Vínculo não encontrado.");
       if (current.ends_on !== null) throw conflict("UNIT_LINK_ENDED", "Este vínculo já foi encerrado.");
       if (input.endsOn < current.starts_on) throw badRequest("A data de término não pode ser anterior ao início do vínculo.");
+      const today = (await tx.query<{ d: string }>("select current_date::text as d")).rows[0]?.d;
+      if (today && input.endsOn > today) throw badRequest("A data de término não pode ser futura: o acesso termina na data informada.");
       const ended = await endUnitMemberRow(tx, ctx.organizationId, workspaceId, unitMemberId, input.endsOn);
       if (!ended) throw conflict("UNIT_LINK_ENDED", "Este vínculo já foi encerrado.");
       await audit(tx, ctx, "person.unit_end", "person", current.person_id, {

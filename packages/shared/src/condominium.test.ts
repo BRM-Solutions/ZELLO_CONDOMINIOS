@@ -20,9 +20,11 @@ const UNIT_ID = "44444444-4444-4444-8444-444444444444";
 const BLOCK_ID = "66666666-6666-4666-8666-666666666666";
 
 describe("papel council", () => {
-  it("entra em ROLES e rankeia entre admin e manager", () => {
+  it("entra em ROLES e fica acima so de member, para nunca reduzir permissao de quem acumula papeis", () => {
     expect(roleSchema.safeParse("council").success).toBe(true);
-    expect(highestRole(["manager", "council", "member"])).toBe("council");
+    expect(highestRole(["manager", "council", "member"])).toBe("manager");
+    expect(highestRole(["staff", "council"])).toBe("staff");
+    expect(highestRole(["council", "member"])).toBe("council");
     expect(highestRole(["council", "admin"])).toBe("admin");
   });
 

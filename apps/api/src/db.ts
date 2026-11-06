@@ -25,6 +25,9 @@ interface TxOptions {
   readOnly?: boolean;
 }
 
+// Datas de negocio (current_date) seguem o horario do Brasil, nao o UTC do servidor.
+const APP_TIMEZONE = "America/Sao_Paulo";
+
 export async function runInTx<T>(
   db: Db,
   settings: Record<string, string>,
@@ -35,7 +38,7 @@ export async function runInTx<T>(
   let broken = false;
   try {
     await client.query(options.readOnly ? "begin read only" : "begin");
-    for (const [name, value] of Object.entries(settings)) {
+    for (const [name, value] of Object.entries({ timezone: APP_TIMEZONE, ...settings })) {
       await client.query("select set_config($1, $2, true)", [name, value]);
     }
     const result = await fn(client);

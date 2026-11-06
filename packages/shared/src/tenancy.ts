@@ -5,7 +5,7 @@ export const ROLES = ["owner", "admin", "council", "manager", "staff", "member"]
 export const roleSchema = z.enum(ROLES);
 export type Role = z.infer<typeof roleSchema>;
 
-export const ROLE_RANK: Record<Role, number> = { owner: 6, admin: 5, council: 4, manager: 3, staff: 2, member: 1 };
+export const ROLE_RANK: Record<Role, number> = { owner: 6, admin: 5, manager: 4, staff: 3, council: 2, member: 1 };
 
 export function highestRole(roles: Role[]): Role | undefined {
   return [...roles].sort((a, b) => ROLE_RANK[b] - ROLE_RANK[a])[0];
