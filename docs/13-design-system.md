@@ -228,7 +228,7 @@ Componentes exigidos por [06](06-frontend.md) que o zip não desenha (`EmptyStat
 | Ordens de Serviço | `/ordens-servico` | `ClipboardList` | | Perfis e Permissões | `/perfis-permissoes` | `ShieldCheck` |
 | Obras e Instalações | `/obras` | `HardHat` | | | | |
 
-- Item só aparece quando o módulo existe no produto **e** o papel tem a permissão correspondente em `PERMISSIONS` (`packages/shared/src/permissions.ts:3`). A lista de papéis do mock (`sindico`, `conselho`, `zelador`...) **não** é copiada: o mapeamento para `owner/admin/manager/staff/member` é decisão de produto (plano §8, item 2).
+- Item só aparece quando o módulo existe no produto **e** o papel tem a permissão correspondente em `PERMISSIONS` (`packages/shared/src/permissions.ts:3`). A lista de papéis do mock **não** é copiada; o mapeamento decidido ([11-dominio](11-dominio.md) §3) é: `superadmin` → `super_admin`; `admin` (Administração) → `owner`/`admin`; `conselho` → `council`; `sindico` → `manager`; `zelador` → `staff`; `morador` → `member`. A visibilidade de cada item segue a do mock para o papel equivalente.
 - "Design System" (`/design-system`) não entra no menu de produção.
 - Rotas no app real ficam sob `/o/:organizationId/...` ([06](06-frontend.md) §"Roteamento e guards"); o segmento final mantém o nome do mock.
 

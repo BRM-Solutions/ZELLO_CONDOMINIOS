@@ -1,44 +1,194 @@
-/* Unico lugar com cores literais. Tema: sistema por padrao; data-theme="light|dark" forca. */
+/* Unico arquivo com cor literal. Valores: docs/13-design-system.md secoes 3.1 a 3.3 e 3.6.
+   Tema claro = padrao (mock). Escuro = extensao DS-1 (3.2.1), por data-theme="dark" ou por preferencia do sistema. */
 :root {
-  color-scheme: light dark;
-  --color-bg: #f6f7f9;
-  --color-surface: #ffffff;
-  --color-text: #15191f;
-  --color-muted: #5b6573;
-  --color-border: #d9dee5;
-  --color-primary: #1d4ed8;
-  --color-primary-contrast: #ffffff;
-  --color-danger: #b42318;
-  --color-focus: #1d4ed8;
+  color-scheme: light;
+  --radius: 0.875rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.22 0.02 150);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.02 150);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.02 150);
+  --primary: oklch(0.38 0.075 155);
+  --primary-foreground: oklch(0.98 0.01 85);
+  --primary-soft: oklch(0.92 0.035 150);
+  --secondary: oklch(0.96 0.004 150);
+  --secondary-foreground: oklch(0.3 0.04 155);
+  --muted: oklch(0.96 0.004 150);
+  --muted-foreground: oklch(0.5 0.02 150);
+  --accent: oklch(0.62 0.16 38);
+  --accent-foreground: oklch(0.98 0.01 85);
+  --destructive: oklch(0.58 0.19 27);
+  --destructive-foreground: oklch(0.98 0.01 85);
+  --destructive-soft: oklch(0.93 0.04 25);
+  --success: oklch(0.62 0.16 150);
+  --success-soft: oklch(0.93 0.05 150);
+  --warning: oklch(0.75 0.15 65);
+  --warning-soft: oklch(0.94 0.05 75);
+  --info: oklch(0.52 0.17 255);
+  --info-soft: oklch(0.93 0.035 255);
+  --sun: oklch(0.82 0.15 85);
+  --border: oklch(0.91 0.006 150);
+  --input: oklch(0.87 0.008 150);
+  --ring: oklch(0.55 0.09 155);
+  --sidebar: oklch(0.33 0.065 155);
+  --sidebar-foreground: oklch(0.95 0.015 85);
+  --sidebar-active: oklch(0.95 0.025 85);
+  --sidebar-active-foreground: oklch(0.3 0.065 155);
+  --platform: oklch(0.26 0.045 230);
+  --platform-foreground: oklch(0.97 0.01 85);
+  --platform-accent: oklch(0.78 0.13 75);
+  --accent-strong: oklch(0.53 0.16 38);
+  --destructive-strong: oklch(0.53 0.19 27);
+  --success-strong: oklch(0.54 0.16 150);
+
+  --chart-1: var(--success);
+  --chart-2: var(--warning);
+  --chart-3: var(--primary);
+  --chart-4: var(--info);
+  --chart-5: var(--destructive);
+
+  --shadow-card: 0 1px 2px oklch(0.3 0.03 150 / 6%), 0 8px 24px -12px oklch(0.3 0.03 150 / 18%);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --overlay-modal: rgb(0 0 0 / 0.8);
+  --overlay-drawer: color-mix(in oklab, var(--foreground) 40%, transparent);
+  --gradient-hero-fade: linear-gradient(90deg, var(--background) 0%, color-mix(in oklab, var(--background) 85%, transparent) 35%, transparent 70%);
+  --gradient-mosaic: conic-gradient(from 30deg, var(--success), var(--sun), var(--accent), var(--info), var(--success));
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-bg: #0f1318;
-    --color-surface: #181d24;
-    --color-text: #eef1f5;
-    --color-muted: #9aa4b2;
-    --color-border: #2c343f;
-    --color-primary: #6b95ff;
-    --color-primary-contrast: #0b1020;
-    --color-danger: #ff8a80;
-    --color-focus: #6b95ff;
-  }
+/* Predefinicoes de cor (3.6): trocam so --primary e --sidebar. Verde = sem atributo. */
+:root[data-brand="azul"] {
+  --primary: oklch(0.45 0.1 230);
+  --sidebar: oklch(0.33 0.08 235);
+}
+:root[data-brand="vinho"] {
+  --primary: oklch(0.45 0.12 340);
+  --sidebar: oklch(0.35 0.1 340);
+}
+:root[data-brand="terracota"] {
+  --primary: oklch(0.52 0.13 40);
+  --sidebar: oklch(0.38 0.09 40);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-bg: #0f1318;
-  --color-surface: #181d24;
-  --color-text: #eef1f5;
-  --color-muted: #9aa4b2;
-  --color-border: #2c343f;
-  --color-primary: #6b95ff;
-  --color-primary-contrast: #0b1020;
-  --color-danger: #ff8a80;
-  --color-focus: #6b95ff;
+  --background: oklch(0.18 0.015 150);
+  --foreground: oklch(0.95 0.01 85);
+  --card: oklch(0.22 0.018 150);
+  --card-foreground: oklch(0.95 0.01 85);
+  --popover: oklch(0.22 0.018 150);
+  --popover-foreground: oklch(0.95 0.01 85);
+  --primary: oklch(0.72 0.11 155);
+  --primary-foreground: oklch(0.18 0.03 155);
+  --primary-soft: oklch(0.3 0.05 155);
+  --secondary: oklch(0.26 0.015 150);
+  --secondary-foreground: oklch(0.9 0.02 150);
+  --muted: oklch(0.26 0.012 150);
+  --muted-foreground: oklch(0.74 0.02 150);
+  --accent: oklch(0.72 0.14 40);
+  --accent-foreground: oklch(0.18 0.03 40);
+  --destructive: oklch(0.7 0.17 27);
+  --destructive-foreground: oklch(0.18 0.03 27);
+  --destructive-soft: oklch(0.32 0.08 25);
+  --success: oklch(0.74 0.15 150);
+  --success-soft: oklch(0.3 0.06 150);
+  --warning: oklch(0.8 0.14 70);
+  --warning-soft: oklch(0.32 0.06 70);
+  --info: oklch(0.74 0.12 255);
+  --info-soft: oklch(0.3 0.06 255);
+  --sun: oklch(0.82 0.15 85);
+  --border: oklch(0.32 0.012 150);
+  --input: oklch(0.4 0.015 150);
+  --ring: oklch(0.68 0.1 155);
+  --sidebar: oklch(0.21 0.03 155);
+  --sidebar-foreground: oklch(0.93 0.015 85);
+  --sidebar-active: oklch(0.32 0.05 155);
+  --sidebar-active-foreground: oklch(0.95 0.02 85);
+  --platform: oklch(0.2 0.035 230);
+  --platform-foreground: oklch(0.95 0.01 85);
+  --platform-accent: oklch(0.78 0.13 75);
+  --accent-strong: oklch(0.78 0.13 45);
+  --destructive-strong: oklch(0.78 0.13 27);
+  --success-strong: oklch(0.78 0.14 150);
+}
+:root[data-theme="dark"][data-brand="azul"] {
+  --primary: oklch(0.72 0.11 230);
+  --primary-foreground: oklch(0.18 0.03 230);
+  --sidebar: oklch(0.21 0.035 235);
+}
+:root[data-theme="dark"][data-brand="vinho"] {
+  --primary: oklch(0.72 0.12 340);
+  --primary-foreground: oklch(0.18 0.03 340);
+  --sidebar: oklch(0.21 0.04 340);
+}
+:root[data-theme="dark"][data-brand="terracota"] {
+  --primary: oklch(0.72 0.12 40);
+  --primary-foreground: oklch(0.18 0.03 40);
+  --sidebar: oklch(0.21 0.035 40);
 }
 
-:root[data-theme="light"] {
-  color-scheme: light;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: oklch(0.18 0.015 150);
+    --foreground: oklch(0.95 0.01 85);
+    --card: oklch(0.22 0.018 150);
+    --card-foreground: oklch(0.95 0.01 85);
+    --popover: oklch(0.22 0.018 150);
+    --popover-foreground: oklch(0.95 0.01 85);
+    --primary: oklch(0.72 0.11 155);
+    --primary-foreground: oklch(0.18 0.03 155);
+    --primary-soft: oklch(0.3 0.05 155);
+    --secondary: oklch(0.26 0.015 150);
+    --secondary-foreground: oklch(0.9 0.02 150);
+    --muted: oklch(0.26 0.012 150);
+    --muted-foreground: oklch(0.74 0.02 150);
+    --accent: oklch(0.72 0.14 40);
+    --accent-foreground: oklch(0.18 0.03 40);
+    --destructive: oklch(0.7 0.17 27);
+    --destructive-foreground: oklch(0.18 0.03 27);
+    --destructive-soft: oklch(0.32 0.08 25);
+    --success: oklch(0.74 0.15 150);
+    --success-soft: oklch(0.3 0.06 150);
+    --warning: oklch(0.8 0.14 70);
+    --warning-soft: oklch(0.32 0.06 70);
+    --info: oklch(0.74 0.12 255);
+    --info-soft: oklch(0.3 0.06 255);
+    --sun: oklch(0.82 0.15 85);
+    --border: oklch(0.32 0.012 150);
+    --input: oklch(0.4 0.015 150);
+    --ring: oklch(0.68 0.1 155);
+    --sidebar: oklch(0.21 0.03 155);
+    --sidebar-foreground: oklch(0.93 0.015 85);
+    --sidebar-active: oklch(0.32 0.05 155);
+    --sidebar-active-foreground: oklch(0.95 0.02 85);
+    --platform: oklch(0.2 0.035 230);
+    --platform-foreground: oklch(0.95 0.01 85);
+    --platform-accent: oklch(0.78 0.13 75);
+    --accent-strong: oklch(0.78 0.13 45);
+    --destructive-strong: oklch(0.78 0.13 27);
+    --success-strong: oklch(0.78 0.14 150);
+  }
+  :root:not([data-theme="light"])[data-brand="azul"] {
+    --primary: oklch(0.72 0.11 230);
+    --primary-foreground: oklch(0.18 0.03 230);
+    --sidebar: oklch(0.21 0.035 235);
+  }
+  :root:not([data-theme="light"])[data-brand="vinho"] {
+    --primary: oklch(0.72 0.12 340);
+    --primary-foreground: oklch(0.18 0.03 340);
+    --sidebar: oklch(0.21 0.04 340);
+  }
+  :root:not([data-theme="light"])[data-brand="terracota"] {
+    --primary: oklch(0.72 0.12 40);
+    --primary-foreground: oklch(0.18 0.03 40);
+    --sidebar: oklch(0.21 0.035 40);
+  }
 }

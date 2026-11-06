@@ -34,6 +34,12 @@ const mimeList = z
   )
   .pipe(z.array(z.string().regex(/^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*$/)).min(1));
 
+// 32 bytes em base64 padrão (44 caracteres, um "=" final). Mensagem genérica: nunca ecoar o valor.
+const key32 = z
+  .string()
+  .regex(/^[A-Za-z0-9+/]{43}=$/, "deve ser 32 bytes em base64")
+  .transform((value) => Buffer.from(value, "base64"));
+
 const apiEnvSchema = z.object({
   NODE_ENV: nodeEnv,
   API_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
@@ -55,7 +61,12 @@ const apiEnvSchema = z.object({
   STORAGE_SIGNED_URL_TTL_SECONDS: z.coerce.number().int().min(60).max(300).default(120),
   FILE_MAX_BYTES: z.coerce.number().int().min(1).max(52_428_800).default(10_485_760),
   FILE_ALLOWED_MIME: mimeList,
+  DATA_ENCRYPTION_KEY: key32,
+  DATA_HASH_KEY: key32,
   LOG_LEVEL: logLevel,
+}).refine((env) => !env.DATA_ENCRYPTION_KEY.equals(env.DATA_HASH_KEY), {
+  path: ["DATA_HASH_KEY"],
+  message: "deve ser diferente de DATA_ENCRYPTION_KEY",
 });
 
 const workerEnvSchema = z.object({
@@ -82,6 +93,8 @@ export interface Config {
   signedUrlTtlSeconds: number;
   fileMaxBytes: number;
   fileAllowedMime: string[];
+  dataEncryptionKey: Buffer;
+  dataHashKey: Buffer;
   logLevel: string;
 }
 
@@ -118,6 +131,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     signedUrlTtlSeconds: data.STORAGE_SIGNED_URL_TTL_SECONDS,
     fileMaxBytes: data.FILE_MAX_BYTES,
     fileAllowedMime: data.FILE_ALLOWED_MIME,
+    dataEncryptionKey: data.DATA_ENCRYPTION_KEY,
+    dataHashKey: data.DATA_HASH_KEY,
     logLevel: data.LOG_LEVEL,
   };
 }

@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "1. Ver o visual do sistema (sem login)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173/design-system.html",
+      "webRoot": "${workspaceFolder}/apps/web",
+      "preLaunchTask": "Iniciar visualização",
+      "postDebugTask": "Parar tudo"
+    },
+    {
+      "name": "2. Abrir o portal (precisa de configuração e login)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173/",
+      "webRoot": "${workspaceFolder}/apps/web",
+      "preLaunchTask": "Iniciar visualização",
+      "postDebugTask": "Parar tudo"
+    }
+  ]
+}

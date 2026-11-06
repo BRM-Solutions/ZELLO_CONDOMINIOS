@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { uuidSchema } from "./common";
 
-export const ROLES = ["owner", "admin", "manager", "staff", "member"] as const;
+export const ROLES = ["owner", "admin", "council", "manager", "staff", "member"] as const;
 export const roleSchema = z.enum(ROLES);
 export type Role = z.infer<typeof roleSchema>;
 
-export const ROLE_RANK: Record<Role, number> = { owner: 5, admin: 4, manager: 3, staff: 2, member: 1 };
+export const ROLE_RANK: Record<Role, number> = { owner: 6, admin: 5, manager: 4, staff: 3, council: 2, member: 1 };
 
 export function highestRole(roles: Role[]): Role | undefined {
   return [...roles].sort((a, b) => ROLE_RANK[b] - ROLE_RANK[a])[0];
@@ -24,6 +24,8 @@ export const workspaceSchema = z.object({
   id: uuidSchema,
   organizationId: uuidSchema,
   name: z.string().min(1),
+  slug: z.string().nullable(),
+  address: z.string().nullable(),
   cnpj: z.string().nullable(),
   city: z.string().nullable(),
   state: z.string().length(2).nullable(),

@@ -1,6 +1,9 @@
 import { workspaceSchema, paginatedSchema } from "@app/shared";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../api";
+import { EmptyState, ErrorState, LoadingRows } from "../components/ui/States";
+import { ListCard } from "../components/ui/ListCard";
+import { PageTitle } from "../components/ui/PageTitle";
 import { useAuth } from "../contexts/AuthContext";
 
 const workspacesResponseSchema = paginatedSchema(workspaceSchema);
@@ -16,25 +19,20 @@ export function DashboardPage() {
 
   return (
     <section>
-      <div className="page-head">
-        <h1>Workspaces</h1>
-      </div>
-      {workspaces.isPending && <p className="state" role="status">Carregando...</p>}
+      <PageTitle title="Workspaces" />
+      {workspaces.isPending && <LoadingRows />}
       {workspaces.isError && (
-        <p className="state state-error" role="alert">Não foi possível carregar os workspaces.</p>
+        <ErrorState message="Não foi possível carregar os workspaces." onRetry={() => void workspaces.refetch()} />
       )}
-      {workspaces.data && workspaces.data.data.length === 0 && (
-        <p className="state">Nenhum workspace cadastrado.</p>
-      )}
+      {workspaces.data && workspaces.data.data.length === 0 && <EmptyState message="Nenhum workspace cadastrado." />}
       {workspaces.data && workspaces.data.data.length > 0 && (
-        <ul className="grid">
-          {workspaces.data.data.map((workspace) => (
-            <li key={workspace.id} className="card">
-              <h2>{workspace.name}</h2>
-              <p className="muted">{[workspace.city, workspace.state].filter(Boolean).join(" / ") || "Sem localização"}</p>
-            </li>
-          ))}
-        </ul>
+        <ListCard
+          rows={workspaces.data.data.map((workspace) => ({
+            id: workspace.id,
+            title: workspace.name,
+            subtitle: [workspace.city, workspace.state].filter(Boolean).join(" / ") || "Sem localização",
+          }))}
+        />
       )}
     </section>
   );

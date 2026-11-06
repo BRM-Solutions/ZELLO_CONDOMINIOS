@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Iniciar visualização",
+      "type": "shell",
+      "command": "pnpm --filter @app/web exec vite --port 5173 --strictPort",
+      "isBackground": true,
+      "presentation": { "reveal": "silent" },
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE v",
+          "endsPattern": "Local:"
+        }
+      }
+    },
+    {
+      "label": "Parar tudo",
+      "type": "shell",
+      "command": "echo ${input:pararTudo}",
+      "problemMatcher": []
+    },
+    {
+      "label": "Rodar testes rápidos",
+      "type": "shell",
+      "command": "pnpm test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Rodar testes com banco local",
+      "type": "shell",
+      "command": "pnpm test:local",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    { "id": "pararTudo", "type": "command", "command": "workbench.action.tasks.terminateAll" }
+  ]
+}

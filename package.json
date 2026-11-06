@@ -17,10 +17,13 @@
     "test": "pnpm -r test",
     "test:full": "pnpm -r test:full",
     "check-env": "node scripts/check-env.mjs",
-    "init": "node scripts/init-project.mjs"
+    "init": "node scripts/init-project.mjs",
+    "test:db": "node scripts/test-db.mjs check",
+    "test:local": "node scripts/test-db.mjs run -- pnpm test:full"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "embedded-postgres": "17.11.0-beta.19",
     "eslint": "^10.14.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",

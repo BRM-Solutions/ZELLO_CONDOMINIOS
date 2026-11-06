@@ -522,3 +522,326 @@ describe("app.can_access_object (PGlite)", () => {
     expect(await remaining(all)).toEqual([available, held, retained].sort());
   });
 });
+
+describe("condominium structure migration (PGlite)", () => {
+  const ORG_C = "cccccccc-0000-4000-8000-0000000000c0";
+  const WS_C1 = "cccccccc-0000-4000-8000-0000000000c1";
+  const WS_C2 = "cccccccc-0000-4000-8000-0000000000c2";
+  const BLK_C1 = "cccccccc-0000-4000-8000-0000000000b1";
+  const BLK_C1B = "cccccccc-0000-4000-8000-0000000000b2";
+  const BLK_C2 = "cccccccc-0000-4000-8000-0000000000b3";
+  const UNIT_101 = "cccccccc-0000-4000-8000-000000000101";
+  const UNIT_102 = "cccccccc-0000-4000-8000-000000000102";
+  const UNIT_C2 = "cccccccc-0000-4000-8000-000000000201";
+  const P_RES = "cccccccc-0000-4000-8000-0000000000d1";
+  const P_ROOMMATE = "cccccccc-0000-4000-8000-0000000000d2";
+  const P_PENDING = "cccccccc-0000-4000-8000-0000000000d3";
+  const P_C2 = "cccccccc-0000-4000-8000-0000000000d4";
+  const UM_RES = "cccccccc-0000-4000-8000-0000000000e1";
+  const UM_ROOMMATE = "cccccccc-0000-4000-8000-0000000000e2";
+  const UM_PENDING = "cccccccc-0000-4000-8000-0000000000e3";
+  const UM_C2 = "cccccccc-0000-4000-8000-0000000000e4";
+  const U_OWN = "00000000-0000-4000-8000-0000000000c1";
+  const U_COUNCIL = "00000000-0000-4000-8000-0000000000c2";
+  const U_MGR1 = "00000000-0000-4000-8000-0000000000c3";
+  const U_MGR2 = "00000000-0000-4000-8000-0000000000c4";
+  const U_STF = "00000000-0000-4000-8000-0000000000c5";
+  const U_RES = "00000000-0000-4000-8000-0000000000c6";
+  const U_PENDING = "00000000-0000-4000-8000-0000000000c7";
+
+  const rows = async <T = { id: string }>(role: string, user: string | null, org: string | null, sql: string, params: unknown[] = []) =>
+    as(role, user, org, async () => (await db.query<T>(sql, params)).rows);
+
+  beforeAll(async () => {
+    await db.exec(`
+      insert into auth.users (id) values
+        ('${U_OWN}'), ('${U_COUNCIL}'), ('${U_MGR1}'), ('${U_MGR2}'), ('${U_STF}'), ('${U_RES}'), ('${U_PENDING}');
+      insert into app.organizations (id, name) values ('${ORG_C}', 'test_org_c');
+      insert into app.workspaces (id, organization_id, name, slug, address) values
+        ('${WS_C1}', '${ORG_C}', 'Condominio C1', 'condominio-c1', 'Rua A, 1'),
+        ('${WS_C2}', '${ORG_C}', 'Condominio C2', 'condominio-c2', null);
+      insert into app.memberships (user_id, organization_id, workspace_id, role, status) values
+        ('${U_OWN}', '${ORG_C}', null, 'owner', 'active'),
+        ('${U_COUNCIL}', '${ORG_C}', '${WS_C1}', 'council', 'active'),
+        ('${U_MGR1}', '${ORG_C}', '${WS_C1}', 'manager', 'active'),
+        ('${U_MGR2}', '${ORG_C}', '${WS_C2}', 'manager', 'active'),
+        ('${U_STF}', '${ORG_C}', '${WS_C1}', 'staff', 'active'),
+        ('${U_RES}', '${ORG_C}', '${WS_C1}', 'member', 'active'),
+        ('${U_PENDING}', '${ORG_C}', '${WS_C1}', 'member', 'active');
+      insert into app.blocks (id, organization_id, workspace_id, name) values
+        ('${BLK_C1}', '${ORG_C}', '${WS_C1}', 'Bloco 1'),
+        ('${BLK_C1B}', '${ORG_C}', '${WS_C1}', 'Bloco 2'),
+        ('${BLK_C2}', '${ORG_C}', '${WS_C2}', 'Bloco 1');
+      insert into app.units (id, organization_id, workspace_id, block_id, number) values
+        ('${UNIT_101}', '${ORG_C}', '${WS_C1}', '${BLK_C1}', '101'),
+        ('${UNIT_102}', '${ORG_C}', '${WS_C1}', '${BLK_C1}', '102'),
+        ('${UNIT_C2}', '${ORG_C}', '${WS_C2}', '${BLK_C2}', '201');
+      insert into app.people (id, organization_id, workspace_id, full_name, email, user_id, access_status, created_by) values
+        ('${P_RES}', '${ORG_C}', '${WS_C1}', 'Ana Souza', 'ana@exemplo.com', '${U_RES}', 'active', '${U_MGR1}'),
+        ('${P_ROOMMATE}', '${ORG_C}', '${WS_C1}', 'Carlos Lima', 'carlos@exemplo.com', null, 'none', '${U_MGR1}'),
+        ('${P_PENDING}', '${ORG_C}', '${WS_C1}', 'Beatriz Melo', 'bia@exemplo.com', '${U_PENDING}', 'pending_approval', '${U_MGR1}'),
+        ('${P_C2}', '${ORG_C}', '${WS_C2}', 'Joana Avila', 'joana@exemplo.com', null, 'none', '${U_MGR2}');
+      insert into app.unit_members (id, organization_id, workspace_id, unit_id, person_id, relation, created_by) values
+        ('${UM_RES}', '${ORG_C}', '${WS_C1}', '${UNIT_101}', '${P_RES}', 'owner', '${U_MGR1}'),
+        ('${UM_ROOMMATE}', '${ORG_C}', '${WS_C1}', '${UNIT_101}', '${P_ROOMMATE}', 'tenant', '${U_MGR1}'),
+        ('${UM_PENDING}', '${ORG_C}', '${WS_C1}', '${UNIT_102}', '${P_PENDING}', 'resident', '${U_MGR1}'),
+        ('${UM_C2}', '${ORG_C}', '${WS_C2}', '${UNIT_C2}', '${P_C2}', 'owner', '${U_MGR2}');
+    `);
+  }, 60_000);
+
+  afterAll(async () => {
+    await db.exec(`delete from app.organizations where id = '${ORG_C}'`);
+    const left = await db.query("select 1 from app.units where organization_id = $1", [ORG_C]);
+    expect(left.rows).toHaveLength(0);
+  });
+
+  it("accepts council only with a workspace and keeps rejecting unknown roles", async () => {
+    const insert = (role: string, ws: string | null) =>
+      db
+        .query("insert into app.memberships (user_id, organization_id, workspace_id, role) values ($1, $2, $3, $4)", [U_OWNER_B, ORG_B, ws, role])
+        .then(() => true)
+        .catch(() => false);
+    expect(await insert("council", null)).toBe(false);
+    expect(await insert("owner", WS_B1)).toBe(false);
+    expect(await insert("superuser", null)).toBe(false);
+    expect(await insert("council", WS_B1)).toBe(true);
+    await db.query("delete from app.memberships where user_id = $1 and role = 'council'", [U_OWNER_B]);
+  });
+
+  it("enforces slug format, global uniqueness and allows several null slugs", async () => {
+    const setSlug = (id: string, slug: string | null) =>
+      db.query("update app.workspaces set slug = $2 where id = $1", [id, slug]).then(() => true).catch(() => false);
+    expect(await setSlug(WS_C2, "condominio-c1")).toBe(false);
+    for (const bad of ["Ab-c", "ab", "a_b_c", "-abc", "abc--def", "x".repeat(61)]) expect(await setSlug(WS_C2, bad)).toBe(false);
+    expect(await setSlug(WS_B1, "b1-slug")).toBe(true);
+    expect(await setSlug(WS_A1, null)).toBe(true);
+    expect(await setSlug(WS_A2, null)).toBe(true);
+    expect(await db.query("update app.workspaces set address = $2 where id = $1", [WS_C1, "x".repeat(201)]).then(() => true).catch(() => false)).toBe(false);
+  });
+
+  it("keeps block and unit names unique per scope, case-insensitively", async () => {
+    const run = (sql: string) => db.exec(sql).then(() => true).catch(() => false);
+    expect(await run(`insert into app.blocks (organization_id, workspace_id, name) values ('${ORG_C}', '${WS_C1}', 'BLOCO 1')`)).toBe(false);
+    expect(await run(`insert into app.blocks (organization_id, workspace_id, name) values ('${ORG_C}', '${WS_C2}', 'Bloco 2')`)).toBe(true);
+    expect(await run(`insert into app.units (organization_id, workspace_id, block_id, number) values ('${ORG_C}', '${WS_C1}', '${BLK_C1}', '101')`)).toBe(false);
+    expect(await run(`insert into app.units (organization_id, workspace_id, block_id, number) values ('${ORG_C}', '${WS_C1}', '${BLK_C1B}', '101')`)).toBe(true);
+    expect(await run(`insert into app.units (organization_id, workspace_id, block_id, number) values ('${ORG_C}', '${WS_C1}', '${BLK_C2}', '301')`)).toBe(false);
+    expect(await run(`insert into app.units (organization_id, workspace_id, block_id, number) values ('${ORG_C}', '${WS_C1}', '${BLK_C1}', '${"9".repeat(21)}')`)).toBe(false);
+  });
+
+  it("batch insert with ON CONFLICT DO NOTHING is idempotent", async () => {
+    const batch = async () =>
+      (
+        await db.query(
+          `insert into app.units (organization_id, workspace_id, block_id, number)
+           select $1, $2, $3, n from unnest($4::text[]) as t(n) on conflict do nothing returning id`,
+          [ORG_C, WS_C1, BLK_C1B, ["201", "202", "101"]],
+        )
+      ).rows.length;
+    expect(await batch()).toBe(2);
+    expect(await batch()).toBe(0);
+  });
+
+  it("enforces people and link invariants", async () => {
+    const run = (sql: string, params: unknown[] = []) => db.query(sql, params).then(() => true).catch(() => false);
+    const person = (email: string, ws = WS_C1) =>
+      run(
+        `insert into app.people (organization_id, workspace_id, full_name, email, created_by) values ($1, $2, 'Fulano de Tal', $3, $4)`,
+        [ORG_C, ws, email, U_MGR1],
+      );
+    expect(await person("ana@exemplo.com")).toBe(false);
+    expect(await person("Novo@Exemplo.com")).toBe(false);
+    expect(await person("ana@exemplo.com", WS_C2)).toBe(true);
+    expect(await run(`update app.people set status = 'weird' where id = $1`, [P_RES])).toBe(false);
+    expect(await run(`update app.people set access_status = 'weird' where id = $1`, [P_RES])).toBe(false);
+    expect(await run(`update app.people set user_id = $2 where id = $1`, [P_ROOMMATE, U_RES])).toBe(false);
+
+    const link = (unit: string, personId: string, ws = WS_C1) =>
+      run(
+        `insert into app.unit_members (organization_id, workspace_id, unit_id, person_id, relation, created_by) values ($1, $2, $3, $4, 'owner', $5)`,
+        [ORG_C, ws, unit, personId, U_MGR1],
+      );
+    expect(await link(UNIT_101, P_RES)).toBe(false);
+    expect(await link(UNIT_C2, P_RES)).toBe(false);
+    expect(await link(UNIT_C2, P_RES, WS_C2)).toBe(false);
+    expect(await run(`update app.unit_members set ends_on = current_date - 1, starts_on = current_date where id = $1`, [UM_ROOMMATE])).toBe(false);
+    expect(await run(`update app.unit_members set relation = 'dependent' where id = $1`, [UM_ROOMMATE])).toBe(false);
+  });
+
+  it("keeps history: ending a link allows a new active link for the same pair", async () => {
+    const link = () =>
+      db
+        .query(
+          `insert into app.unit_members (organization_id, workspace_id, unit_id, person_id, relation, starts_on, created_by)
+           values ($1, $2, $3, $4, 'resident', current_date, $5)`,
+          [ORG_C, WS_C1, UNIT_102, P_ROOMMATE, U_MGR1],
+        )
+        .then(() => true)
+        .catch(() => false);
+    expect(await link()).toBe(true);
+    expect(await link()).toBe(false);
+    await db.query(
+      "update app.unit_members set ends_on = current_date where person_id = $1 and unit_id = $2 and ends_on is null",
+      [P_ROOMMATE, UNIT_102],
+    );
+    expect(await link()).toBe(true);
+    const history = await db.query("select 1 from app.unit_members where person_id = $1 and unit_id = $2", [P_ROOMMATE, UNIT_102]);
+    expect(history.rows).toHaveLength(2);
+  });
+
+  it("marks personal columns as PII in the catalog", async () => {
+    const res = await db.query<{ column_name: string }>(
+      `select a.attname as column_name
+         from pg_description d
+         join pg_attribute a on a.attrelid = d.objoid and a.attnum = d.objsubid
+        where d.objoid = 'app.people'::regclass and d.description like 'pii:%'
+        order by 1`,
+    );
+    expect(res.rows.map((row) => row.column_name)).toEqual([
+      "email",
+      "full_name",
+      "phone_enc",
+      "phone_hash",
+      "photo_file_id",
+      "whatsapp_enc",
+    ]);
+  });
+
+  it("RLS: blocks and units are readable by every role of the condominium, writable by managers and above", async () => {
+    for (const user of [U_OWN, U_COUNCIL, U_MGR1, U_STF, U_RES]) {
+      const blocks = await rows("app_api", user, ORG_C, "select id from app.blocks where workspace_id = $1", [WS_C1]);
+      expect(blocks.map((r) => r.id)).toContain(BLK_C1);
+      const units = await rows("app_api", user, ORG_C, "select id from app.units where workspace_id = $1", [WS_C1]);
+      expect(units.map((r) => r.id)).toContain(UNIT_101);
+    }
+    const other = await rows("app_api", U_MGR1, ORG_C, "select id from app.blocks where workspace_id = $1", [WS_C2]);
+    expect(other).toEqual([]);
+
+    const insertBlock = (user: string, ws: string, name: string) =>
+      fails("app_api", user, ORG_C, "insert into app.blocks (organization_id, workspace_id, name) values ($1, $2, $3)", [ORG_C, ws, name]);
+    expect(await insertBlock(U_MGR1, WS_C1, "Bloco 9")).toBe(false);
+    expect(await insertBlock(U_OWN, WS_C2, "Bloco 9")).toBe(false);
+    expect(await insertBlock(U_MGR1, WS_C2, "Bloco 8")).toBe(true);
+    for (const user of [U_COUNCIL, U_STF, U_RES]) expect(await insertBlock(user, WS_C1, "Bloco 7")).toBe(true);
+    expect(await fails("app_api", U_MGR1, ORG_C, "update app.units set status = 'inactive' where id = $1 returning id", [UNIT_102])).toBe(false);
+    const denied = await rows("app_api", U_COUNCIL, ORG_C, "update app.units set status = 'inactive' where id = $1 returning id", [UNIT_101]);
+    expect(denied).toEqual([]);
+    expect(await fails("app_api", U_OWN, ORG_C, "delete from app.units where id = $1", [UNIT_101])).toBe(true);
+  });
+
+  it("RLS: only managers and above see people and links; council and staff see nothing", async () => {
+    const people = (user: string) => rows("app_api", user, ORG_C, "select id from app.people");
+    const links = (user: string) => rows("app_api", user, ORG_C, "select id from app.unit_members");
+    expect((await people(U_MGR1)).map((r) => r.id).sort()).toEqual([P_RES, P_ROOMMATE, P_PENDING].sort());
+    const managerC2 = (await people(U_MGR2)).map((r) => r.id);
+    expect(managerC2).toContain(P_C2);
+    expect(managerC2).not.toContain(P_RES);
+    expect((await people(U_OWN)).map((r) => r.id)).toEqual(expect.arrayContaining([P_RES, P_ROOMMATE, P_PENDING, P_C2]));
+    expect(await people(U_COUNCIL)).toEqual([]);
+    expect(await people(U_STF)).toEqual([]);
+    expect(await links(U_COUNCIL)).toEqual([]);
+    expect(await links(U_STF)).toEqual([]);
+    expect((await links(U_MGR2)).map((r) => r.id)).toEqual([UM_C2]);
+  });
+
+  it("RLS: a member sees only their own person row and the links of their own units", async () => {
+    expect((await rows("app_api", U_RES, ORG_C, "select id from app.people")).map((r) => r.id)).toEqual([P_RES]);
+    const links = await rows("app_api", U_RES, ORG_C, "select id from app.unit_members");
+    expect(links.map((r) => r.id).sort()).toEqual([UM_RES, UM_ROOMMATE].sort());
+    expect((await rows("app_api", U_RES, ORG_C, "select app.my_unit_ids() as id")).map((r) => r.id)).toEqual([UNIT_101]);
+  });
+
+  it("my_unit_ids requires an active access, an active link and an active membership", async () => {
+    const mine = (user: string) => rows("app_api", user, ORG_C, "select app.my_unit_ids() as id").then((r) => r.map((x) => x.id));
+    expect(await mine(U_PENDING)).toEqual([]);
+    expect(await rows("app_api", U_PENDING, ORG_C, "select id from app.unit_members")).toEqual([]);
+    expect(await mine(U_MGR1)).toEqual([]);
+
+    await db.query("update app.people set access_status = 'active' where id = $1", [P_PENDING]);
+    expect(await mine(U_PENDING)).toEqual([UNIT_102]);
+    await db.query("update app.memberships set status = 'revoked' where user_id = $1", [U_PENDING]);
+    expect(await mine(U_PENDING)).toEqual([]);
+    await db.query("update app.memberships set status = 'active' where user_id = $1", [U_PENDING]);
+    await db.query("update app.unit_members set ends_on = current_date - 1, starts_on = current_date - 5 where id = $1", [UM_PENDING]);
+    expect(await mine(U_PENDING)).toEqual([]);
+    await db.query("update app.unit_members set ends_on = current_date, starts_on = current_date - 5 where id = $1", [UM_PENDING]);
+    expect(await mine(U_PENDING)).toEqual([]);
+    await db.query("update app.unit_members set ends_on = current_date + 1, starts_on = current_date - 5 where id = $1", [UM_PENDING]);
+    expect(await mine(U_PENDING)).toEqual([UNIT_102]);
+
+    expect(await rows("app_api", U_RES, ORG_B, "select app.my_unit_ids() as id")).toEqual([]);
+    expect(await rows("app_api", U_RES, null, "select app.my_unit_ids() as id")).toEqual([]);
+    expect(await fails("authenticated", U_RES, ORG_C, "select app.my_unit_ids()")).toBe(true);
+    expect(await fails("anon", null, null, "select app.my_unit_ids()")).toBe(true);
+  });
+
+  it("RLS: inserts and updates are limited to managers of that condominium, created_by to the caller", async () => {
+    const addPerson = (user: string, ws: string, createdBy = user, org = ORG_C) =>
+      fails(
+        "app_api",
+        user,
+        org,
+        `insert into app.people (organization_id, workspace_id, full_name, email, created_by) values ($1, $2, 'Pessoa Teste', $3, $4)`,
+        [ORG_C, ws, `${randomId()}@exemplo.com`, createdBy],
+      );
+    expect(await addPerson(U_MGR1, WS_C1)).toBe(false);
+    expect(await addPerson(U_MGR1, WS_C2)).toBe(true);
+    expect(await addPerson(U_MGR1, WS_C1, U_MGR2)).toBe(true);
+    for (const user of [U_COUNCIL, U_STF, U_RES]) expect(await addPerson(user, WS_C1)).toBe(true);
+    expect(await addPerson(U_OWNER_B, WS_C1, U_OWNER_B, ORG_B)).toBe(true);
+
+    const changed = (user: string, id: string) =>
+      rows("app_api", user, ORG_C, "update app.people set status = 'inactive' where id = $1 returning id", [id]);
+    expect(await changed(U_MGR2, P_RES)).toEqual([]);
+    expect((await changed(U_MGR1, P_ROOMMATE)).map((r) => r.id)).toEqual([P_ROOMMATE]);
+    expect(await changed(U_COUNCIL, P_ROOMMATE)).toEqual([]);
+    expect((await changed(U_RES, P_RES)).map((r) => r.id)).toEqual([P_RES]);
+    expect(await changed(U_RES, P_ROOMMATE)).toEqual([]);
+
+    expect(await fails("app_api", U_MGR1, ORG_C, "delete from app.people where id = $1", [P_ROOMMATE])).toBe(true);
+    expect(await fails("app_api", U_MGR1, ORG_C, "delete from app.unit_members where id = $1", [UM_ROOMMATE])).toBe(true);
+  });
+
+  it("RLS: another tenant sees and writes nothing, even naming the organization", async () => {
+    for (const table of ["blocks", "units", "people", "unit_members"]) {
+      expect(await rows("app_api", U_OWNER_B, ORG_C, `select id from app.${table}`)).toEqual([]);
+      expect(await rows("app_api", U_OWNER_B, ORG_B, `select id from app.${table}`)).toEqual([]);
+      expect(await rows("app_api", U_OWN, null, `select id from app.${table}`)).toEqual([]);
+      expect(await fails("anon", null, null, `select id from app.${table}`)).toBe(true);
+      expect(await fails("authenticated", U_OWN, ORG_C, `select id from app.${table}`)).toBe(true);
+    }
+    expect(await fails("app_api", U_OWNER_B, ORG_B, "insert into app.units (organization_id, workspace_id, block_id, number) values ($1, $2, $3, '999')", [ORG_C, WS_C1, BLK_C1])).toBe(true);
+  });
+
+  it("RLS: an owner creates a workspace and reads it back in the next statement", async () => {
+    const id = "cccccccc-0000-4000-8000-0000000000f1";
+    await as("app_api", U_OWN, ORG_C, () =>
+      db.query("insert into app.workspaces (id, organization_id, name, slug) values ($1, $2, 'Novo Condominio', 'novo-condominio')", [id, ORG_C]),
+    );
+    const read = await rows("app_api", U_OWN, ORG_C, "select id from app.workspaces where id = $1", [id]);
+    expect(read.map((r) => r.id)).toEqual([id]);
+    expect(await fails("app_api", U_MGR1, ORG_C, "insert into app.workspaces (organization_id, name) values ($1, 'Intruso')", [ORG_C])).toBe(true);
+  });
+
+  it("cascades the whole structure when the organization is deleted", async () => {
+    const org = "dddddddd-0000-4000-8000-0000000000d0";
+    const ws = "dddddddd-0000-4000-8000-0000000000d1";
+    const blk = "dddddddd-0000-4000-8000-0000000000d2";
+    await db.exec(`
+      insert into app.organizations (id, name) values ('${org}', 'test_cascade_structure');
+      insert into app.workspaces (id, organization_id, name) values ('${ws}', '${org}', 'Cascata');
+      insert into app.blocks (id, organization_id, workspace_id, name) values ('${blk}', '${org}', '${ws}', 'B');
+      insert into app.units (organization_id, workspace_id, block_id, number) values ('${org}', '${ws}', '${blk}', '1');
+      insert into app.people (organization_id, workspace_id, full_name, email, created_by) values ('${org}', '${ws}', 'Pessoa Cascata', 'c@exemplo.com', '${U_OWN}');
+      delete from app.organizations where id = '${org}';
+    `);
+    for (const table of ["blocks", "units", "people", "unit_members"]) {
+      const left = await db.query(`select 1 from app.${table} where organization_id = $1`, [org]);
+      expect(left.rows).toHaveLength(0);
+    }
+  });
+});
+
+function randomId(): string {
+  return crypto.randomUUID().slice(0, 8);
+}

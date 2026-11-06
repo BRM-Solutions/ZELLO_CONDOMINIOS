@@ -1,6 +1,6 @@
 # Spec — Personalizador do condomínio (marca e tema)
 
-> PRD: decisões DS-1/DS-2 da dona (2026-11-05), registradas em [13-design-system](../13-design-system.md) §3.6 — Status: rascunho (bloqueado por DECIDIR-PZ) — Data: 2026-11-05
+> PRD: decisões DS-1/DS-2 da dona (2026-11-05), registradas em [13-design-system](../13-design-system.md) §3.6 — Status: rascunho com PZ-1 a PZ-3 decididos (aguarda Onda 1) — Data: 2026-11-05
 > Onda 2 ([roteiro](README.md)). Depende da Onda 1: [base visual](spec-design-system-base.md) (`BrandingContext`, predefinições em CSS) e `spec-estrutura-condominio.md` (cadastro do condomínio, endereço).
 > Docs a ler para implementar: [13](../13-design-system.md), [02](../02-banco-de-dados.md) §"RLS", [05](../05-backend-api.md), [12](../12-storage-e-governanca.md), [06](../06-frontend.md), [07](../07-testes.md).
 
@@ -23,22 +23,22 @@ Permitir que cada condomínio tenha o próprio portal (nome livre, logo, fotos, 
 Migration nova `supabase/migrations/<timestamp>_workspace_branding.sql` (template `docs/templates/migration-template.sql`), aditiva:
 
 - `app.workspace_branding` (1:1 com workspace): `workspace_id uuid pk`, `organization_id uuid not null`, FK composta `(organization_id, workspace_id) → app.workspaces`; `portal_name text null` (2–80), `slogan text null` (≤ 140), `color_preset text not null default 'verde' check in ('verde','azul','vinho','terracota')`, `mosaic boolean not null default false`, `default_theme text not null default 'light' check in ('light','dark','system')`, `logo_file_id`, `portal_photo_file_id`, `login_photo_file_id` (`uuid null`, FK para `app.files` do mesmo tenant), `updated_by uuid`, `created_at/updated_at`. Sem linha = padrão (verde, claro, sem imagens) — seguro para workspaces existentes.
-- `app.workspaces.slug` (`text null`, `unique`, `^[a-z0-9-]{3,60}$`) — só se DECIDIR-PZ-1 = (a).
-- RLS: `select` para quem tem o workspace em `app.workspace_ids()`; `insert/update` para os papéis de DECIDIR-PZ-2; sem `delete`. Índice em `organization_id`.
-- Leitura pré-login (se PZ-1 = a/b): função `app.public_branding(p_slug text)` `security definer`, `set search_path = ''`, retornando **apenas** nome do portal, nome oficial, slogan, preset, mosaico, tema padrão e caminhos públicos das imagens de workspace ativo; `grant execute` só a `app_api`.
+- `app.workspaces.slug` — criado na [spec de estrutura](spec-estrutura-condominio.md) (Onda 1B), usado aqui no login.
+- RLS: `select` para quem tem o workspace em `app.workspace_ids()`; `insert/update` só `owner` e `admin` (`app.has_org_role(array['owner','admin'])`); sem `delete`. Índice em `organization_id`.
+- Leitura pré-login (PZ-1): função `app.public_branding(p_slug text)` `security definer`, `set search_path = ''`, retornando **apenas** nome do portal, nome oficial, slogan, preset, mosaico, tema padrão e caminhos públicos das imagens de workspace ativo; `grant execute` só a `app_api`.
 - Storage: bucket `public-assets` (público, `allowed_mime_types` png/jpeg/webp, `file_size_limit` 2 MB) criado na migration; imagens de marca com `classification = 'public'`. Ampliar o fluxo de `files` com finalidade `branding` → bucket `public-assets`; demais finalidades seguem em `private-files`. Policies de `storage.objects` para `public-assets`: escrita só via `app.can_access_object` com papel do PZ-2; leitura pública.
 
 ## Shared (`packages/shared`)
 
 - `packages/shared/src/branding.ts` (novo): `COLOR_PRESETS`, `THEMES`, `brandingSchema` (saída), `updateBrandingSchema` (entrada: `portalName`, `slogan`, `colorPreset`, `mosaic`, `defaultTheme`, ids de arquivo), `publicBrandingSchema`. Export em `index.ts`.
-- `permissions.ts`: `branding:update` com os papéis do PZ-2.
+- `permissions.ts`: `branding:update` = `owner`, `admin` (+ `super_admin` pelo mecanismo da Onda 2.4). Síndico e conselho **não**.
 
 ## Backend (`apps/api`)
 
 | Método | Rota | Papel | Entrada | Saída | Erros |
 |---|---|---|---|---|---|
 | GET | `/api/v1/workspaces/:workspaceId/branding` | membro do workspace | — | `brandingSchema` (padrão se não houver linha) | 404 outro tenant |
-| PUT | `/api/v1/workspaces/:workspaceId/branding` | PZ-2 | `updateBrandingSchema` | `brandingSchema` | 400, 403, 404; arquivo de outro tenant ou não `available` = 400 |
+| PUT | `/api/v1/workspaces/:workspaceId/branding` | owner, admin | `updateBrandingSchema` | `brandingSchema` | 400, 403, 404; arquivo de outro tenant ou não `available` = 400 |
 | GET | `/api/v1/public/branding/:slug` | público (sem auth), rate limit | — | `publicBrandingSchema` | 404 (inexistente ou inativo — mesma resposta) |
 
 - `apps/api/src/modules/branding/{routes,repository}.ts` (novo); `withTenantTx` nas rotas autenticadas; `audit_log` em `branding.update` com campos alterados (sem URLs).
@@ -48,7 +48,7 @@ Migration nova `supabase/migrations/<timestamp>_workspace_branding.sql` (templat
 
 - Tela `pages/configuracoes/PersonalizarPage.tsx`, rota `/o/:organizationId/configuracoes/personalizar`, item "Configurações" ([13](../13-design-system.md) §6.2) para os papéis do PZ-2. Layout do cartão "Novo condomínio" de `condominios.tsx:42-56`: `Card` + `CardTitle`, campos (`Field`), amostras das 4 cores (círculo 36 com borda 2 `--foreground` no selecionado; alvo 44 — exceção §8.1; rótulo acessível = nome da cor), interruptor "Mosaico" (`Switch`), seleção de tema padrão, três uploads no padrão de `AnexosPicker` (um arquivo cada) e **pré-visualização** ao vivo (faixa `--sidebar` com nome do portal em display e nome oficial; rodapé "uma plataforma ZELLO"), alternável entre claro e escuro.
 - `BrandingContext` passa a buscar `GET .../branding` (query key com `orgId` + `workspaceId`); após salvar, invalida e reaplica `data-brand`/tema sem recarregar.
-- Login: conforme PZ-1 (com slug, busca `GET /public/branding/:slug` e aplica marca e foto do login).
+- Login: `/c/:slug/entrar` busca `GET /public/branding/:slug` e aplica marca e foto do login.
 - Mobile: formulário e pré-visualização empilhados; amostras em linha com quebra.
 
 ## Segurança e tenant
@@ -69,8 +69,8 @@ Cadastrada pela tela no dev para teste e, em produção, pela pessoa responsáve
 | Slogan | "Seu condomínio conectado a você." (`brand.ts:24`) |
 | Endereço | "Rua Vereador Agostinho de Paula Santos, 548 — Piratininga, Niterói - RJ" (`brand.ts:25`) — campo do cadastro do condomínio |
 | Cor / mosaico / tema | Verde / ligado / claro (`brand.ts:25`) |
-| Logo | `logo-gaudi-mosaico.png` — **não está no zip** (só referência a armazenamento do Lovable, `src/assets/logo-gaudi-mosaico.png.asset.json`); `docs/Mosaic Tile Letter G.png` tem o mesmo tamanho exato (2.317.378 bytes) → DECIDIR-PZ-3 |
-| Foto do portal / do login | `vila-gaudi-oficial.png` / `foto-vila-gaudi.png` — **não estão no zip nem em `docs/`** → DECIDIR-PZ-3 |
+| Logo | `docs/Mosaic Tile Letter G.png` — confirmado pela dona como o logo referenciado no zip (`src/assets/logo-gaudi-mosaico.png.asset.json`, mesmo tamanho: 2.317.378 bytes) |
+| Foto do portal / do login | enviadas pelo condomínio no personalizador (as do protótipo não estão no zip); sem foto, o bloco é omitido |
 
 Imagens otimizadas antes do upload (logo ≤ 512 px, fotos ≤ 1600 px, WebP/PNG < 2 MB).
 
@@ -78,20 +78,17 @@ Imagens otimizadas antes do upload (logo ≤ 512 px, fotos ≤ 1600 px, WebP/PNG
 
 Cor livre (só as 4 predefinições do mock), troca de fontes, domínio próprio por condomínio, área `/plataforma` (backoffice, PZ-2/P7 do PRD), pré-visualização de outras telas além da faixa da sidebar e do rodapé.
 
-## DECIDIR
+## Decisões tomadas (2026-11-05)
 
-- **PZ-1 — Marca na tela de login.** O mock mostra logo, foto e nome do condomínio antes do login.
-  - (a) **Recomendado:** endereço por condomínio com slug (`/c/vila-gaudi/entrar`) + endpoint público só de marca.
-  - (b) Subdomínio por condomínio (`vila-gaudi.<dominio>`): exige DNS curinga e certificado no Easypanel `[verificar]`.
-  - (c) Login genérico com a marca ZELLO; marca do condomínio só depois de entrar (foge do mock).
-- **PZ-2 — Quem usa o personalizador.** (a) **Recomendado:** `owner`, `admin` (administradora; conselho conforme D2 de [11-dominio](../11-dominio.md)) e `super_admin`. (b) Também o síndico (`manager`).
-- **PZ-3 — Imagens do Vila Gaudí.** Confirmar que `docs/Mosaic Tile Letter G.png` é o logo oficial e enviar as duas fotos (`vila-gaudi-oficial.png`, `foto-vila-gaudi.png`), por exemplo exportadas do projeto Lovable. Sem elas, o portal fica sem foto (o bloco é omitido) até o cadastro.
+- **PZ-1:** login por condomínio em `/c/<slug>/entrar` + endpoint público só de marca.
+- **PZ-2:** personalizador só para `super_admin`, `owner` e `admin`. Síndico e conselho não.
+- **PZ-3:** logo = `docs/Mosaic Tile Letter G.png`; fotos do portal e do login enviadas pelo condomínio (parametrizáveis).
 
 ## Verificação manual
 
 1. Dev, tenant de teste: como `admin`, abrir o personalizador, trocar as 4 cores, mosaico e tema padrão; a pré-visualização e o shell mudam sem recarregar.
 2. Enviar logo e fotos; conferir que vêm do bucket `public-assets` e que o tamanho > 2 MB ou MIME fora da lista é recusado com mensagem no campo.
-3. Como `member` e `staff`: sem item e 403 no `PUT`; `GET` funciona.
+3. Como `manager`, `council`, `staff` e `member`: sem item e 403 no `PUT`; `GET` funciona.
 4. Usuário de outro tenant: `GET`/`PUT` = 404.
 5. Login com slug (se PZ-1 = a): marca aplicada antes de entrar; slug inexistente = tela genérica sem erro técnico.
 6. Preferência de tema do usuário vence o padrão do condomínio.
@@ -99,14 +96,13 @@ Cor livre (só as 4 predefinições do mock), troca de fontes, domínio próprio
 
 ## Testes automatizados
 
-- `apps/api/src/test/branding.test.ts`: GET padrão sem linha; PUT feliz (owner/admin); 403 `manager`/`staff`/`member` (conforme PZ-2); 404 outro tenant; 400 preset inválido, nome > 80, arquivo de outro tenant ou não `available`; `audit_log` gravado.
+- `apps/api/src/test/branding.test.ts`: GET padrão sem linha; PUT feliz (owner/admin); 403 `council`/`manager`/`staff`/`member`; 404 outro tenant; 400 preset inválido, nome > 80, arquivo de outro tenant ou não `available`; `audit_log` gravado.
 - `apps/api/src/test/branding-public.int.test.ts`: retorna só campos de marca; 404 igual para slug inexistente e workspace inativo.
 - Catálogo RLS (`supabase/tests/catalog.sql`) continua verde com a tabela nova.
 - `apps/web/src/pages/configuracoes/PersonalizarPage.test.tsx`: seleção de cor atualiza a pré-visualização; erro do servidor aparece no campo.
 
 ## Critério de pronto
 
-- [ ] DECIDIR-PZ-1 a PZ-3 respondidos.
 - [ ] Type-check e lint limpos; testes listados passando com números reais.
 - [ ] RLS testada com usuário de outro tenant; endpoint público sem campo além da marca.
 - [ ] Tela fiel a `condominios.tsx` (comparação lado a lado) e conferida em 320px e desktop, nos dois temas.
