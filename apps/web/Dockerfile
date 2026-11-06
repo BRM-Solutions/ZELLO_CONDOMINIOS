@@ -26,7 +26,7 @@ COPY apps/web apps/web
 RUN pnpm --filter @app/web build
 RUN sed -e "s|__API_URL__|${VITE_API_URL}|g" -e "s|__SUPABASE_URL__|${VITE_SUPABASE_URL}|g" apps/web/nginx.conf > /tmp/default.conf
 
-FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime
+FROM nginxinc/nginx-unprivileged:1.31-alpine AS runtime
 LABEL org.opencontainers.image.title="{{SLUG}}-web" org.opencontainers.image.description="{{PROJETO}} - Web"
 COPY --from=build /tmp/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /repo/apps/web/dist /usr/share/nginx/html
