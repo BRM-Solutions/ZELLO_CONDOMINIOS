@@ -97,8 +97,8 @@ importers:
   apps/web:
     dependencies:
       '@hookform/resolvers':
-        specifier: ^6.0.2
-        version: 6.0.2(react-hook-form@7.91.0(@types/react@18.3.31)(react@18.3.1))(zod@3.25.76)
+        specifier: ^7.0.1
+        version: 7.0.1(react-hook-form@7.91.0(@types/react@18.3.31)(react@18.3.1))(zod@3.25.76)
       '@supabase/supabase-js':
         specifier: ^2.118.0
         version: 2.118.0
@@ -255,6 +255,10 @@ packages:
 
   '@babel/runtime@7.29.10':
     resolution: {integrity: sha512-NpugTzbKgGrNe45Ui32cN8vCFFMxVtP/9rtfwv0nP5FRDAjvYBxJcLVpYA9mr1jxP6cnIT7x9LUzuDTbWYYNRA==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.29.13':
+    resolution: {integrity: sha512-v+oN26xP4YIlQsbQ/CbTH1WG5m/l/DjKKZNy/Kp3f/AFvbgt7Em/D0FeMM3O2hX0YzeN2M16W8lOpyhIkfCBcQ==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.29.7':
@@ -657,10 +661,9 @@ packages:
     resolution: {integrity: sha512-IkO+/KEUvwbVpiURZg+P7zF74z5Jxe0UgJxVni+RtoHQ6IZieXaO02kmadomap/q+l6bc/jdPGGqTjhuZnuz1Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-  '@hookform/resolvers@6.0.2':
-    resolution: {integrity: sha512-e2dqUOlaGuirKVOd/iZWk/Yg5zeaGw7t0hSc3LzxL3o7eZGwZkTyEbBL8H52m0wRKEsNLWoMGOiXGHbPHTXlEQ==}
+  '@hookform/resolvers@7.0.1':
+    resolution: {integrity: sha512-F3aM0dDWsRGmFjnnXjogaGLwP7gY2HA6/c5qp4v4Im/UV7pTNkX+WAjcOlM1V0PE0zoMzuPqCyaYtMzUhoFToA==}
     peerDependencies:
-      '@sinclair/typebox': '>=0.25.24'
       '@standard-schema/spec': ^1.0.0
       '@vinejs/vine': ^2.0.0 || ^3.0.0 || ^4.0.0
       ajv: ^8.12.0
@@ -680,13 +683,12 @@ packages:
       react-hook-form: ^7.55.0
       superstruct: '>=0.12.0'
       typanion: ^3.3.2
+      typebox: ^1.0.0
       valibot: '>=0.31.0 || ^1.0.0-beta.4 || ^1.0.0-rc'
       vest: '>=6.0.0'
       yup: ^1.0.0
       zod: ^3.25.0 || ^4.0.0
     peerDependenciesMeta:
-      '@sinclair/typebox':
-        optional: true
       '@standard-schema/spec':
         optional: true
       '@vinejs/vine':
@@ -722,6 +724,8 @@ packages:
       superstruct:
         optional: true
       typanion:
+        optional: true
+      typebox:
         optional: true
       valibot:
         optional: true
@@ -2860,6 +2864,8 @@ snapshots:
 
   '@babel/runtime@7.29.10': {}
 
+  '@babel/runtime@7.29.13': {}
+
   '@babel/template@7.29.7':
     dependencies:
       '@babel/code-frame': 7.29.7
@@ -3107,7 +3113,7 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
-  '@hookform/resolvers@6.0.2(react-hook-form@7.91.0(@types/react@18.3.31)(react@18.3.1))(zod@3.25.76)':
+  '@hookform/resolvers@7.0.1(react-hook-form@7.91.0(@types/react@18.3.31)(react@18.3.1))(zod@3.25.76)':
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.91.0(@types/react@18.3.31)(react@18.3.1)
@@ -3342,7 +3348,7 @@ snapshots:
   '@testing-library/dom@10.4.2':
     dependencies:
       '@babel/code-frame': 7.29.7
-      '@babel/runtime': 7.29.10
+      '@babel/runtime': 7.29.13
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       dom-accessibility-api: 0.5.16
