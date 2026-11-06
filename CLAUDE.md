@@ -17,6 +17,7 @@ SaaS multi-tenant em pt-BR (organization → workspaces → recursos). Domínio 
 - **Opus 5.5 (`claude-opus-5-5`)**: PRD, spec, arquitetura, plano, revisão, auditoria.
 - **Sonnet 5.5 (`claude-sonnet-5-5`)**: implementar código, testes e migrations a partir de spec aprovada.
 - Delegue pelos agentes de `.claude/agents/` (`spec-writer`, `builder`, `reviewer`, `explorer`); o modelo já está fixo neles — não passe `model` na chamada.
+- A sessão principal fica em Opus e **só planeja e coordena**: spec = `spec-writer` (Opus); código, testes e migrations = sempre `builder` (Sonnet); revisão = `reviewer` (Opus). Não escreva código de feature na sessão principal (só edição trivial). Ponto de partida de quem assume o projeto: `docs/HANDOFF.md`.
 
 ## Fluxo de feature (docs/10-workflow-claude.md)
 1. PRD/spec com `arquivo:linha` reais (templates em `docs/templates/`). Decisão de produto = pergunta, nunca suposição.

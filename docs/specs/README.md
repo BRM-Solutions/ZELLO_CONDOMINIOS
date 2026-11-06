@@ -39,7 +39,7 @@ A e B não compartilham arquivo. Dono dos arquivos compartilhados nesta onda: tr
 | Ordem | Spec | Área | Bloqueio | Status |
 |---|---|---|---|---|
 | 2.1 | [spec-personalizador](spec-personalizador.md) (marca e tema por condomínio; marca Vila Gaudí como dado) | `supabase/`, `apps/api`, `packages/shared`, `apps/web` | Onda 1 | decidida, aguarda Onda 1 |
-| 2.2 | `spec-cadastro-moradores.md` (página `/c/<slug>/cadastro` **sem convite**, vínculo com pré-cadastro, confirmação de e-mail via Resend/outbox, aprovação por síndico/administradora) | `supabase/`, `apps/api`, `packages/shared` | — | a escrever |
+| 2.2 | [spec-cadastro-moradores](spec-cadastro-moradores.md) (página `/c/<slug>/cadastro` **sem convite**, vínculo com pré-cadastro, confirmação de e-mail via Supabase Auth com SMTP Resend, avisos via outbox, aprovação por síndico/administradora) | `supabase/`, `apps/api`, `packages/shared` | — | decidida (6 decisões aceitas em 2026-11-05), pronta para aprovar e implementar |
 | 2.3 | `spec-telas-acesso.md` (login real, recuperar senha, cadastro, `/moradores`, aprovações, estrutura do condomínio) | `apps/web` | 2.2 + Onda 1 | a escrever |
 | 2.4 | `spec-backoffice-minimo.md` (condomínios, usuários, auditoria dentro do portal; `super_admin` com motivo auditado) | api + web | — | a escrever |
 
