@@ -87,7 +87,7 @@ async function prepare() {
       try {
         await client.query(readFileSync(join(dir, file), "utf8"));
       } catch (error) {
-        throw new Error(`a migration ${file} falhou: ${error.message}`);
+        throw new Error(`a migration ${file} falhou: ${error.message}`, { cause: error });
       }
     }
     await client.query(`alter role app_api with login password '${APP_PASSWORD}'`);
