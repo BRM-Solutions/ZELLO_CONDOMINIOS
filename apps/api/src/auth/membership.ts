@@ -35,6 +35,7 @@ export const loadMembership: RequestHandler = asyncRoute(async (req, _res, next)
     organizationId: organizationId.data,
     role,
     workspaceIds: rows.flatMap((row) => (row.workspace_id ? [row.workspace_id] : [])),
+    scopes: rows.map((row) => ({ workspaceId: row.workspace_id, role: row.role })),
   };
   next();
 });

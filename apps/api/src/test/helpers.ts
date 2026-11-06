@@ -21,6 +21,8 @@ export const testEnv = {
   DATABASE_URL: "postgresql://app_api:secret@localhost:6543/postgres",
   SUPABASE_URL: "https://test-ref.supabase.co",
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+  DATA_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString("base64"),
+  DATA_HASH_KEY: Buffer.alloc(32, 2).toString("base64"),
   LOG_LEVEL: "silent",
 };
 

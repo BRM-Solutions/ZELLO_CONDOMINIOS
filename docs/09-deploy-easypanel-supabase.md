@@ -183,7 +183,7 @@ env:
 | web | `VITE_API_URL` | **build** | `https://api.<dominio>` (sem `/api/v1`: o `apiFetch` acrescenta) |
 | web | `VITE_SUPABASE_URL` | **build** | Settings → API |
 | web | `VITE_SUPABASE_ANON_KEY` | **build**, pública | chave *publishable* |
-| api | `DATA_ENCRYPTION_KEY`, `DATA_HASH_KEY` | runtime, secretas | geradas (32 bytes, base64), quando o primeiro campo cifrado entrar ([segurança](03-seguranca.md)) |
+| api | `DATA_ENCRYPTION_KEY`, `DATA_HASH_KEY` | runtime, secretas, **obrigatórias** | geradas (`openssl rand -base64 32`, 32 bytes em base64), distintas entre si; cifram/indexam telefone e WhatsApp de pessoas ([segurança](03-seguranca.md)). Definir no Easypanel de cada ambiente **antes** do deploy: a API não sobe sem elas |
 | worker | `NODE_ENV`, `LOG_LEVEL` | runtime | idem api |
 | worker | `WORKER_POLL_INTERVAL_MS`, `WORKER_BATCH_SIZE` | runtime, opcionais | defaults no `config.ts` |
 | worker | `DATABASE_URL` | runtime, secreta | pooler 6543, usuário `app_worker.<ref>` |

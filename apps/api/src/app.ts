@@ -10,6 +10,7 @@ import type { Config } from "./config";
 import type { Db } from "./db";
 import { DomainError, errorHandler, notFoundHandler, requestId } from "./http";
 import { createSupabaseStorageClient, type StorageClient } from "./integrations/storage-client";
+import { condominiumRouter } from "./modules/condominium/routes";
 import { filesRouter } from "./modules/files/routes";
 import { workspacesRouter } from "./modules/workspaces/routes";
 import { healthRouter } from "./modules/health/routes";
@@ -26,7 +27,17 @@ export interface AppDeps {
 }
 
 const QUIET_PATHS = new Set(["/health", "/ready"]);
-const REDACT_PATHS = ["req.headers.authorization", "req.headers.cookie"];
+export const REDACT_PATHS = [
+  "req.headers.authorization",
+  "req.headers.cookie",
+  "email",
+  "phone",
+  "whatsapp",
+  "*.email",
+  "*.phone",
+  "*.whatsapp",
+  "err.detail",
+];
 
 export function createApp({ config, db, verifier, logger, webhookAdapters = {}, storage }: AppDeps): Express {
   const storageClient =
@@ -75,7 +86,14 @@ export function createApp({ config, db, verifier, logger, webhookAdapters = {}, 
   app.use(express.json({ limit: "64kb" }));
 
   app.use("/api/v1/me", authenticate(verifier), meRouter());
-  app.use("/api/v1", authenticate(verifier), loadMembership, workspacesRouter(), filesRouter({ storage: storageClient, config }));
+  app.use(
+    "/api/v1",
+    authenticate(verifier),
+    loadMembership,
+    workspacesRouter(),
+    condominiumRouter({ config }),
+    filesRouter({ storage: storageClient, config }),
+  );
 
   app.use(notFoundHandler);
   app.use(errorHandler);

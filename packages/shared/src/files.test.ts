@@ -80,7 +80,7 @@ describe("file schemas", () => {
 
 describe("file permissions", () => {
   it("lets every member read, writers upload and managers delete", () => {
-    expect(rolesFor("files:read")).toEqual(["owner", "admin", "manager", "staff", "member"]);
+    expect(rolesFor("files:read")).toEqual(["owner", "admin", "council", "manager", "staff", "member"]);
     expect(rolesFor("files:write")).toEqual(["owner", "admin", "manager", "staff"]);
     expect(rolesFor("files:delete")).toEqual(["owner", "admin", "manager"]);
     expect(can("member", "files:read")).toBe(true);
