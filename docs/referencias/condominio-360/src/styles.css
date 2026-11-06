@@ -1,0 +1,131 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Design System ZELLO — tema padrão Gaudí 360° (verde, creme, terracota e mosaico) + tema da plataforma */
+
+@theme inline {
+  --font-display: "DM Serif Display", Georgia, serif;
+  --font-sans: "Figtree", system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-sun: var(--sun);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-primary: var(--sidebar);
+  --color-sidebar-primary-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-active);
+  --color-sidebar-accent-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--ring);
+  --color-platform: var(--platform);
+  --color-platform-foreground: var(--platform-foreground);
+  --color-platform-accent: var(--platform-accent);
+  --color-chart-1: var(--success);
+  --color-chart-2: var(--warning);
+  --color-chart-3: var(--primary);
+  --color-chart-4: var(--info);
+  --color-chart-5: var(--destructive);
+}
+
+:root {
+  --radius: 0.875rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.22 0.02 150);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.02 150);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.02 150);
+  --primary: oklch(0.38 0.075 155);
+  --primary-foreground: oklch(0.98 0.01 85);
+  --primary-soft: oklch(0.92 0.035 150);
+  --secondary: oklch(0.96 0.004 150);
+  --secondary-foreground: oklch(0.3 0.04 155);
+  --muted: oklch(0.96 0.004 150);
+  --muted-foreground: oklch(0.5 0.02 150);
+  --accent: oklch(0.62 0.16 38);
+  --accent-foreground: oklch(0.98 0.01 85);
+  --destructive: oklch(0.58 0.19 27);
+  --destructive-foreground: oklch(0.98 0.01 85);
+  --destructive-soft: oklch(0.93 0.04 25);
+  --success: oklch(0.62 0.16 150);
+  --success-soft: oklch(0.93 0.05 150);
+  --warning: oklch(0.75 0.15 65);
+  --warning-soft: oklch(0.94 0.05 75);
+  --info: oklch(0.52 0.17 255);
+  --info-soft: oklch(0.93 0.035 255);
+  --sun: oklch(0.82 0.15 85);
+  --border: oklch(0.91 0.006 150);
+  --input: oklch(0.87 0.008 150);
+  --ring: oklch(0.55 0.09 155);
+  --sidebar: oklch(0.33 0.065 155);
+  --sidebar-foreground: oklch(0.95 0.015 85);
+  --sidebar-active: oklch(0.95 0.025 85);
+  --sidebar-active-foreground: oklch(0.3 0.065 155);
+  --platform: oklch(0.26 0.045 230);
+  --platform-foreground: oklch(0.97 0.01 85);
+  --platform-accent: oklch(0.78 0.13 75);
+  --shadow-card: 0 1px 2px oklch(0.3 0.03 150 / 6%), 0 8px 24px -12px oklch(0.3 0.03 150 / 18%);
+  --gradient-hero-fade: linear-gradient(90deg, var(--background) 0%, color-mix(in oklab, var(--background) 85%, transparent) 35%, transparent 70%);
+  --gradient-mosaic: conic-gradient(from 30deg, var(--success), var(--sun), var(--accent), var(--info), var(--success));
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+  h1, h2, .font-display { font-family: var(--font-display); font-weight: 400; }
+}
+
+@utility card-surface {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: var(--shadow-card);
+}
+@utility hero-fade { background: var(--gradient-hero-fade); }
+@utility mosaic-ring { background: var(--gradient-mosaic); }
+@utility bell-pulse {
+  animation: bell-pulse 2s ease-in-out infinite;
+}
+@keyframes bell-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--destructive) 55%, transparent); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}

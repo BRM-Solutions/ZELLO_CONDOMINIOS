@@ -1,0 +1,126 @@
+# Referencia do fluxo: docs/09-deploy-easypanel-supabase.md (secrets, variables, URLs de deploy do Easypanel).
+# Dev: automatico apos o CI verde na main. Prod: manual (workflow_dispatch com confirm=prod).
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Digite "prod" para publicar a main em producao'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_CLI_VERSION: 2.122.0
+
+jobs:
+  deploy-dev:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: dev
+    permissions:
+      contents: read
+      statuses: write
+    concurrency:
+      group: deploy-dev
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_DEV }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF_DEV }}
+      DEPLOY_URL_API: ${{ secrets.EASYPANEL_DEPLOY_URL_API_DEV }}
+      DEPLOY_URL_WEB: ${{ secrets.EASYPANEL_DEPLOY_URL_WEB_DEV }}
+      DEPLOY_URL_WORKER: ${{ secrets.EASYPANEL_DEPLOY_URL_WORKER_DEV }}
+      SMOKE_API_URL: ${{ vars.SMOKE_API_URL_DEV }}
+      SMOKE_WEB_URL: ${{ vars.SMOKE_WEB_URL_DEV }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - uses: supabase/setup-cli@v3
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Migrations (dev)
+        run: |
+          supabase link --project-ref "$SUPABASE_PROJECT_REF"
+          supabase db push --dry-run
+          supabase db push
+      - name: Deploy e smoke (dev)
+        run: bash scripts/ci-deploy.sh
+      - name: Registrar deploy/dev no commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${RELEASE_SHA}" \
+            -f state=success -f context=deploy/dev -f description="Migrations e deploy em dev concluidos"
+
+  # Bloqueia prod sem CI verde e sem deploy/dev (status gravado pelo deploy-dev) no mesmo commit.
+  verify-release:
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm == 'prod' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      statuses: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Exigir CI verde e deploy em dev para este commit
+        run: |
+          ci_ok=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${GITHUB_SHA}&event=push&status=completed" \
+            --jq '[.workflow_runs[] | select(.conclusion == "success")] | length')
+          if [ "${ci_ok:-0}" -lt 1 ]; then
+            echo "Bloqueado: nao ha run do workflow CI com sucesso para ${GITHUB_SHA}." >&2
+            exit 1
+          fi
+          dev_ok=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/statuses" \
+            --jq '[.[] | select(.context == "deploy/dev")] | sort_by(.created_at) | last | .state // "none"')
+          if [ "$dev_ok" != "success" ]; then
+            echo "Bloqueado: deploy em dev nao concluido com sucesso para ${GITHUB_SHA} (status deploy/dev: ${dev_ok})." >&2
+            exit 1
+          fi
+          echo "CI e deploy em dev ok para ${GITHUB_SHA}."
+
+  deploy-prod:
+    needs: verify-release
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm == 'prod' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: prod
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF_PROD }}
+      DEPLOY_URL_API: ${{ secrets.EASYPANEL_DEPLOY_URL_API_PROD }}
+      DEPLOY_URL_WEB: ${{ secrets.EASYPANEL_DEPLOY_URL_WEB_PROD }}
+      DEPLOY_URL_WORKER: ${{ secrets.EASYPANEL_DEPLOY_URL_WORKER_PROD }}
+      SMOKE_API_URL: ${{ vars.SMOKE_API_URL_PROD }}
+      SMOKE_WEB_URL: ${{ vars.SMOKE_WEB_URL_PROD }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@v3
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Migrations (prod)
+        run: |
+          supabase link --project-ref "$SUPABASE_PROJECT_REF"
+          supabase db push --dry-run
+          supabase db push
+      - name: Deploy e smoke (prod)
+        run: bash scripts/ci-deploy.sh

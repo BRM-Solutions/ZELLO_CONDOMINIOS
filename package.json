@@ -1,0 +1,30 @@
+{
+  "name": "app-root",
+  "version": "0.0.0",
+  "private": true,
+  "description": "{{PROJETO}} - SaaS multi-tenant",
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm -r build",
+    "lint": "eslint .",
+    "type-check": "pnpm -r type-check",
+    "test": "pnpm -r test",
+    "test:full": "pnpm -r test:full",
+    "check-env": "node scripts/check-env.mjs",
+    "init": "node scripts/init-project.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}

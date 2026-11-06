@@ -1,0 +1,11 @@
+# Roadmap
+- [x] Avisos: anexos, edição só Síndico(a)/SuperAdministrador, subtítulo
+- [x] Ocorrências renomeado; Calendário após Financeiro; foto oficial; data/saudação no Painel; perfil "Administração e Conselho"
+- [x] Equipe e Escalas
+- [x] Fornecedores: contratos
+- [x] Moradores: diretório
+- [x] Perfis e Permissões
+- [x] Financeiro: importação Excel/PDF
+- [ ] Login real e permissões no servidor (aguarda decisão de ativar Lovable Cloud)
+- [x] Fase 1: Feedback do Portal, Central de Documentos, "Ocorrências do Condomínio"
+- [ ] Fases 2–5: leitura de documentos por IA, Central de Insights, alertas por perfil (aguarda Lovable Cloud)
