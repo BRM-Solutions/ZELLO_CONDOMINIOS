@@ -1,5 +1,5 @@
 # Contexto de build: raiz do repositorio (docker build -f apps/api/Dockerfile .)
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable
@@ -20,7 +20,7 @@ COPY apps/api apps/api
 RUN pnpm --filter @app/api type-check && pnpm --filter @app/api build
 RUN pnpm --filter @app/api deploy --prod /out
 
-FROM node:22-alpine AS runtime
+FROM node:26-alpine AS runtime
 LABEL org.opencontainers.image.title="{{SLUG}}-api" org.opencontainers.image.description="{{PROJETO}} - API"
 ENV NODE_ENV=production
 ENV API_PORT=3000
