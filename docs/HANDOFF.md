@@ -89,6 +89,14 @@ Specs ficam prontas **uma onda à frente** da construção. Detalhe das ondas e 
 - A Milena conduz o desenvolvimento; o Tiago apoia as decisões de deploy, infra e segurança.
 - **Supabase dev:** o Tiago cria a conta e o projeto (supabase.com, região South America/São Paulo, plano gratuito para dev) e cadastra as chaves como **Codespaces secrets do repositório** com `gh secret set <NOME> --app codespaces --repo <dono>/ZELLO_CONDOMINIOS`, digitando o valor no prompt. A Milena recebe como variáveis de ambiente no Codespace e **nunca** recebe senha por chat ou WhatsApp. O CI usa os secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD_DEV` e `SUPABASE_PROJECT_REF_DEV` (lista completa no `deploy.yml`).
 
+### Supabase dev (estado em 2026-11-10)
+
+- Projeto `zello-dev` criado pelo Tiago na região **us-west-2 (Oregon)**, não em São Paulo como recomenda o doc 09. Aceitável para dev com dados fictícios; **produção deve ser em South America (São Paulo)**. A região não pode ser alterada depois de criado o projeto.
+- As 3 migrations (`20261030120000`, `20261030130000`, `20261105202822`) foram **aplicadas pelo CI** no dev. Isso valida as migrations em Supabase de verdade, com as policies de Storage.
+- Secrets de Actions já cadastrados: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD_DEV`, `SUPABASE_PROJECT_REF_DEV`. Secrets de Codespaces: `DATA_ENCRYPTION_KEY`, `DATA_HASH_KEY`, `SUPABASE_URL`, `VITE_SUPABASE_URL`. O GitHub não deixa ler secrets de volta; as chaves `DATA_*` de dev são descartáveis.
+- **Falta:** `SUPABASE_PUBLISHABLE_KEY` e `VITE_SUPABASE_ANON_KEY` (chave pública `publishable`/`anon`, nunca a `secret`), as senhas dos papéis `app_api` e `app_worker`, o `DATABASE_URL` e a configuração do Auth. Isso é exatamente a `spec-automacao-banco`.
+- O script `scripts/ci-deploy.sh` **pula** o disparo quando as URLs do Easypanel estão vazias, então o deploy no dev fica verde antes de o Easypanel existir.
+
 ## 7. Comandos úteis
 
 | Para quê | Comando |
