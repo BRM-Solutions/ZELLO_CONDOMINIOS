@@ -58,6 +58,7 @@
 |---|---|---|
 | 1 | Conferir o visual (320/375/414px e desktop, claro e escuro) e pedir ao Tiago o merge dos PRs #9 e #10 | Milena; Tiago autoriza o merge |
 | 2 | Ambiente: projeto Supabase **dev** (não há como confirmar se existe), Resend (conta, domínio, SPF/DKIM), chaves `DATA_ENCRYPTION_KEY` e `DATA_HASH_KEY` no Easypanel dev e prod, secrets do CI. Veja `docs/09-deploy-easypanel-supabase.md`. Segredo nunca no chat nem no Git | Tiago/Milena |
+| 2a | **PRIORIDADE (exigência do Tiago): automação total do banco.** O código/CI deve fazer sozinho tudo que toca o banco e o Supabase, para a Milena não mexer nele. **Já é automático:** migrations (`supabase link` + `supabase db push` no deploy dev, `.github/workflows/deploy.yml`). **Ainda é manual** (`docs/09-deploy-easypanel-supabase.md` §1 e §2.1): criar o projeto, definir a senha dos papéis `app_api` e `app_worker`, configurar Auth no painel (URLs, e-mail, política de senha) e montar a URL do pooler. Escrever `spec-automacao-banco` (`spec-writer`, Opus) cobrindo: bootstrap idempotente das senhas dos papéis no CI, `supabase config push` para o Auth, seed de dados fictícios só no dev, e verificação automática pós-deploy. Implementar com `builder` (Sonnet). Nenhuma senha em log, chat ou Git | spec-writer, depois builder |
 | 3 | **Onda 2.2** implementar `spec-cadastro-moradores`: resumir a spec, obter aprovação, `builder` em `supabase/`, `apps/api`, `packages/shared` | `/spec-then-delegate` |
 | 4 | **Onda 2.1** `spec-personalizador` (depende do 1A no ar; parte web usa o `BrandingContext` existente) | builder, depois reviewer |
 | 5 | **Onda 2.3** escrever `spec-telas-acesso`: login real, recuperar senha, cadastro, `/moradores`, aprovações com contador de pendentes. Incluir a pendência da seção 6 sobre editar o próprio perfil | `spec-writer`, depois builder (`apps/web`) |
@@ -77,7 +78,16 @@ Specs ficam prontas **uma onda à frente** da construção. Detalhe das ondas e 
 - **Retenção de dados pessoais:** prazos e base legal pedem confirmação do jurídico (`docs/11-dominio.md` §6). O job de retenção da 2.2 só entra depois disso.
 - **Dependabot:** 8 PRs abertos (#1 a #8). Recomendação: ignorar saltos grandes (TypeScript 6, Node 25, react-router 7) por ora e aceitar patch e minor num PR separado.
 - **Sem login local:** o banco de teste local não tem o Supabase Auth. Login real exige o projeto Supabase dev (recomendado) ou o Supabase local com Docker.
+- **Ambiente da Milena:** ela usa Windows, mas o Smart App Control bloqueia Git e `esbuild.exe`; ela **não desativou proteção** e trabalha no **GitHub Codespaces** (conta `milenaleiterj-source`, máquina de 2 núcleos, porta privada). Na `main` (`9533bab`) ela confirmou: instalação ok, `pnpm test:local` com 270 testes aprovados (shared 37, web 48, API 185) e vitrine aberta. Nunca peça para desligar antivírus ou proteção do Windows. Detalhes em `docs/GUIA-MILENA.md` seção 5.
 - **Mock:** `docs/referencias/condominio-360/` é só leitura, cópia idêntica do zip. Não instale dependências lá nem copie código dele.
+
+## 6b. Permissões, infra e quem decide
+
+- Repositório hoje na conta `tiago-brm` (decisão pendente: mover para a organização BRM-Solutions com a Milena como administradora do repositório).
+- **`main` protegida** (ruleset `main-protegida`): só entra por Pull Request com o CI `verify` verde; sem push direto, sem force-push, sem apagar. Administradores podem ignorar a regra apenas via PR.
+- **Ambiente `prod` no GitHub:** exige aprovação do Tiago e só publica a partir da `main`. Quem trabalha nunca dispara deploy em produção sozinho.
+- A Milena conduz o desenvolvimento; o Tiago apoia as decisões de deploy, infra e segurança.
+- **Supabase dev:** o Tiago cria a conta e o projeto (supabase.com, região South America/São Paulo, plano gratuito para dev) e cadastra as chaves como **Codespaces secrets do repositório** com `gh secret set <NOME> --app codespaces --repo <dono>/ZELLO_CONDOMINIOS`, digitando o valor no prompt. A Milena recebe como variáveis de ambiente no Codespace e **nunca** recebe senha por chat ou WhatsApp. O CI usa os secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD_DEV` e `SUPABASE_PROJECT_REF_DEV` (lista completa no `deploy.yml`).
 
 ## 7. Comandos úteis
 
