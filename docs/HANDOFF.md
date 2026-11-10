@@ -32,7 +32,7 @@
 
 ## 3. Onde estamos
 
-- Repositório público: https://github.com/tiago-brm/ZELLO_CONDOMINIOS (branch principal `main`).
+- Repositório público: https://github.com/BRM-Solutions/ZELLO_CONDOMINIOS (organização BRM-Solutions; branch principal `main`).
 - **PR #9** (somente documentação: decisões e specs) e **PR #10** (Onda 1: base visual e estrutura do condomínio) estão abertos, com CI verde, **ainda não mergeados**. Enquanto não forem, a `main` só tem o import inicial: trabalhe a partir de `git checkout feat/onda-1`.
 - **Onda 1 (pronta, no PR #10):**
   - `apps/web`: tokens do mock, tema claro e escuro, 4 cores predefinidas, fontes locais, componentes base, shell do portal, vitrine só em desenvolvimento (`apps/web/design-system.html`).
@@ -83,11 +83,19 @@ Specs ficam prontas **uma onda à frente** da construção. Detalhe das ondas e 
 
 ## 6b. Permissões, infra e quem decide
 
-- Repositório hoje na conta `tiago-brm` (decisão pendente: mover para a organização BRM-Solutions com a Milena como administradora do repositório).
+- **Repositório na organização BRM-Solutions** (transferido em 2026-11-10). A Milena é **colaboradora externa com função Admin somente neste repositório** e **não é membro da organização**: nunca a adicione como membro nem a um time, porque a permissão base da organização é "leitura" e ela passaria a ler os repositórios privados da empresa. A organização não tem secrets nem servidores de execução próprios; se a empresa criar secrets de organização ou um runner próprio com alcance "todos os repositórios", este repositório passa a enxergá-los (use alcance selecionado ou um grupo de runners separado).
 - **`main` protegida** (ruleset `main-protegida`): só entra por Pull Request com o CI `verify` verde; sem push direto, sem force-push, sem apagar. Administradores podem ignorar a regra apenas via PR.
 - **Ambiente `prod` no GitHub:** exige aprovação do Tiago e só publica a partir da `main`. Quem trabalha nunca dispara deploy em produção sozinho.
 - A Milena conduz o desenvolvimento; o Tiago apoia as decisões de deploy, infra e segurança.
 - **Supabase dev:** o Tiago cria a conta e o projeto (supabase.com, região South America/São Paulo, plano gratuito para dev) e cadastra as chaves como **Codespaces secrets do repositório** com `gh secret set <NOME> --app codespaces --repo <dono>/ZELLO_CONDOMINIOS`, digitando o valor no prompt. A Milena recebe como variáveis de ambiente no Codespace e **nunca** recebe senha por chat ou WhatsApp. O CI usa os secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD_DEV` e `SUPABASE_PROJECT_REF_DEV` (lista completa no `deploy.yml`).
+
+### Supabase dev (estado em 2026-11-10)
+
+- Projeto `zello-dev` criado pelo Tiago na região **us-west-2 (Oregon)**, não em São Paulo como recomenda o doc 09. Aceitável para dev com dados fictícios; **produção deve ser em South America (São Paulo)**. A região não pode ser alterada depois de criado o projeto.
+- As 3 migrations (`20261030120000`, `20261030130000`, `20261105202822`) foram **aplicadas pelo CI** no dev. Isso valida as migrations em Supabase de verdade, com as policies de Storage.
+- Secrets de Actions já cadastrados: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD_DEV`, `SUPABASE_PROJECT_REF_DEV`. Secrets de Codespaces: `DATA_ENCRYPTION_KEY`, `DATA_HASH_KEY`, `SUPABASE_URL`, `VITE_SUPABASE_URL`. O GitHub não deixa ler secrets de volta; as chaves `DATA_*` de dev são descartáveis.
+- **Falta:** `SUPABASE_PUBLISHABLE_KEY` e `VITE_SUPABASE_ANON_KEY` (chave pública `publishable`/`anon`, nunca a `secret`), as senhas dos papéis `app_api` e `app_worker`, o `DATABASE_URL` e a configuração do Auth. Isso é exatamente a `spec-automacao-banco`.
+- O script `scripts/ci-deploy.sh` **pula** o disparo quando as URLs do Easypanel estão vazias, então o deploy no dev fica verde antes de o Easypanel existir.
 
 ## 7. Comandos úteis
 

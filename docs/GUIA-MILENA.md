@@ -8,7 +8,7 @@ Este guia explica, sem termos técnicos, como ver o sistema funcionando e como r
 
 1. Instale o **VS Code**, o **Google Chrome**, o **Node 22** (nodejs.org, versão LTS) e o **Git para Windows** (git-scm.com, aceite as opções padrão; ele inclui o "Git Bash", que o Claude Code usa).
 2. Abra o **PowerShell normal** (sem "Executar como administrador") e rode: `npm install -g pnpm@9.15.9`.
-3. Escolha uma pasta de caminho curto, como `C:\dev`, e baixe o projeto: `git clone https://github.com/tiago-brm/ZELLO_CONDOMINIOS.git`. Depois `cd ZELLO_CONDOMINIOS` e `code .`.
+3. Escolha uma pasta de caminho curto, como `C:\dev`, e baixe o projeto: `git clone https://github.com/BRM-Solutions/ZELLO_CONDOMINIOS.git`. Depois `cd ZELLO_CONDOMINIOS` e `code .`.
 4. No terminal do VS Code (menu Terminal > Novo Terminal), rode `pnpm install` e espere terminar.
 5. Uma vez só: `git config --global core.longpaths true` (evita erro de nome de arquivo comprido).
 
